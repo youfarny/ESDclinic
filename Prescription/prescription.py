@@ -3,13 +3,13 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
-# Database configuration (using SQLite for simplicity)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///prescriptions.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# Define the Prescription model
+
 class Prescription(db.Model):
     __tablename__ = 'prescription'
     
@@ -20,11 +20,11 @@ class Prescription(db.Model):
     def json(self):
         return {"prescription_id": self.prescriptionID, "medicine": self.medicine, "appointment_id": self.appointmentID}
 
-# Create database tables
+
 with app.app_context():
     db.create_all()
 
-# Endpoint to create a new prescription
+
 @app.route("/new", methods=['POST'])
 def create_prescription():
     data = request.get_json()
@@ -41,7 +41,7 @@ def create_prescription():
         return jsonify({"error": str(e)}), 500
     
     
-# Endpoint to get all prescriptions
+
 @app.route("/prescriptions", methods=['GET'])
 def get_all_prescriptions():
     prescriptions = Prescription.query.all()
@@ -51,7 +51,7 @@ def get_all_prescriptions():
     return jsonify({"prescriptions": [prescription.json() for prescription in prescriptions]}), 200
 
 
-# Endpoint to get prescription information
+
 @app.route("/prescription/<int:prescription_id>", methods=['GET'])
 def get_prescription(prescription_id):
     prescription = Prescription.query.get(prescription_id)
@@ -60,7 +60,7 @@ def get_prescription(prescription_id):
 
     return jsonify({"prescription": prescription.json()}), 200
 
-# Endpoint to update a prescription by ID
+
 @app.route("/prescription/<int:prescription_id>", methods=['PUT'])
 def update_prescription(prescription_id):
     prescription = Prescription.query.get(prescription_id)
@@ -79,7 +79,6 @@ def update_prescription(prescription_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Endpoint to delete a prescription by ID
 @app.route("/prescription/<int:prescription_id>", methods=['DELETE'])
 def delete_prescription(prescription_id):
     prescription = Prescription.query.get(prescription_id)
@@ -95,6 +94,6 @@ def delete_prescription(prescription_id):
 
 
 
-# Run the Flask app
+
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)
