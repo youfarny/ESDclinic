@@ -1,0 +1,5 @@
+FROM python:3.9
+WORKDIR /app/doctor
+COPY . /app/doctor
+RUN pip install flask
+CMD ["python", "doctor.py"]

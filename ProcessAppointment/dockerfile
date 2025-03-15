@@ -1,0 +1,5 @@
+FROM python:3.9
+WORKDIR /app/process_appointment
+COPY . /app/process_appointment
+RUN pip install -r /app/process_appointment/requirements.txt
+CMD ["python", "Process_Appointment.py"]

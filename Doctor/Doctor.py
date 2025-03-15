@@ -3,11 +3,13 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
-
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ESD213password!@116.15.73.191:3306/doctor'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+
+with app.app_context():
+    db.create_all()
 
 
 class Doctor(db.Model):
@@ -20,9 +22,11 @@ class Doctor(db.Model):
         return {"doctor_id": self.doctor_id, "doctor_name": self.doctor_name}
 
 
-with app.app_context():
-    db.create_all()
-
+# with app.app_context():
+#     print("Trying to connect to MySQL...")
+#     db.create_all()
+#     print("Database initialized successfully.")
+#     db.create_all()
 
 @app.route("/doctor", methods=['POST'])
 def create_doctor():

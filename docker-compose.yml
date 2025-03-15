@@ -1,0 +1,64 @@
+version: '3.8'
+services:
+  doctor:
+    build:
+      context: ./doctor
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./doctor:/app/doctor  # Enable live updates
+
+  patient:
+    build:
+      context: ./patient
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./patient:/app/patient
+
+  payment:
+    build:
+      context: ./payment
+      dockerfile: Dockerfile
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./payment:/app/payment
+
+  prescription:
+    build:
+      context: ./prescription
+      dockerfile: Dockerfile
+    ports:
+      - "5004:5004"
+    volumes:
+      - ./prescription:/app/prescription
+
+  # notification:
+  #   build:
+  #     context: ./notification
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5005:5005"
+  #   volumes:
+  #     - ./notification:/app/notification
+
+  # appointment:
+  #   build:
+  #     context: ./appointment
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5000:5000"
+  #   volumes:
+  #     - ./appointment:/app/appointment
+
+  # process_appointment:
+  #   build:
+  #     context: ./process_appointment
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5200:5200"
+  #   volumes:
+  #     - ./process_appointment:/app/process_appointment
