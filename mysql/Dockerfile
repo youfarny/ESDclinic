@@ -2,10 +2,10 @@
 FROM mysql:latest
 
 # Set environment variables
-ENV MYSQL_ROOT_PASSWORD=password
+ENV MYSQL_ROOT_PASSWORD=ESD213password!
 ENV MYSQL_DATABASE=esd-clinic-db
 ENV MYSQL_USER=user
-ENV MYSQL_PASSWORD=password
+ENV MYSQL_PASSWORD=ESD213password!
 
 # Copy custom MySQL configuration
 COPY my.cnf /etc/mysql/conf.d/my.cnf

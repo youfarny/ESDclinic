@@ -6,9 +6,9 @@ services:
     container_name: esd-clinic-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: ESD213password!
       MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      MYSQL_PASSWORD: ESD213password!
     ports:
       - "3306:3306"
     volumes:
