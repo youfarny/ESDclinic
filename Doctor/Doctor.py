@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///doctors.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ESD213password!@116.15.73.191:3306/doctor'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -24,7 +24,7 @@ with app.app_context():
     db.create_all()
 
 
-@app.route("/doctor", methods=['POST'])
+@app.route("/doctor/create", methods=['POST'])
 def create_doctor():
     data = request.get_json()
     if not data or 'doctor_name' not in data:
@@ -98,4 +98,4 @@ def delete_doctor(doctor_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)
