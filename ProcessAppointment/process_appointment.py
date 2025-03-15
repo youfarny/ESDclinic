@@ -23,7 +23,7 @@ def process_appointment():
             appointment_data = request.get_json()
             print("\nReceived an appointment request in JSON:", appointment_data)
 
-            result = handle_appointment(appointment_data)
+            result = processAppointment(appointment_data)
             return jsonify(result), result["code"]
 
         except Exception as e:
@@ -48,12 +48,6 @@ def processAppointment(appointment_data):
     appointment_result = invoke_http(appointment_URL, method='POST', json=appointment_data)
     print('appointment_result:', appointment_result)
 
-    # Record the activity log
-    print('\n\n-----Invoking activity_log microservice-----')
-    invoke_http(activity_log_URL, method="POST", json=appointment_result)
-    print("\nAppointment request sent to activity log.\n")
-    # - reply from the invocation is not used;
-    # continue even if this invocation fails
 
     # Check the appointment result; if a failure, send it to the error microservice.
     code = appointment_result["code"]
