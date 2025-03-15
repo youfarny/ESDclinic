@@ -13,29 +13,29 @@ db = SQLAlchemy(app)
 class Doctor(db.Model):
     __tablename__ = 'doctor'
     
-    doctorID = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    doctorName = db.Column(db.String(100), nullable=False)
+    doctor_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    doctor_name = db.Column(db.String(100), nullable=False)
 
     def json(self):
-        return {"doctor_id": self.doctorID, "doctor_name": self.doctorName}
+        return {"doctor_id": self.doctor_id, "doctor_name": self.doctor_name}
 
 
 with app.app_context():
     db.create_all()
 
 
-@app.route("/doctor/create", methods=['POST'])
+@app.route("/doctor", methods=['POST'])
 def create_doctor():
     data = request.get_json()
     if not data or 'doctor_name' not in data:
         return jsonify({"error": "Missing doctor_name"}), 400
 
-    new_doctor = Doctor(doctorName=data['doctor_name'])
+    new_doctor = Doctor(doctor_name=data['doctor_name'])
 
     try:
         db.session.add(new_doctor)
         db.session.commit()
-        return jsonify({"doctor_id": new_doctor.doctorID}), 201
+        return jsonify({"doctor_id": new_doctor.doctor_id}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -49,7 +49,7 @@ def get_doctor_by_id(doctor_id):
 
 @app.route("/doctor_name/<string:doctor_name>", methods=['GET'])
 def get_doctor_by_name(doctor_name):
-    doctor = Doctor.query.filter_by(doctorName=doctor_name).first()
+    doctor = Doctor.query.filter_by(doctor_name=doctor_name).first()
     if not doctor:
         return jsonify({"error": "Doctor not found"}), 404
 
@@ -74,7 +74,7 @@ def update_doctor(doctor_id):
 
     data = request.get_json()
     if 'doctor_name' in data:
-        doctor.doctorName = data['doctor_name']
+        doctor.doctor_name = data['doctor_name']
 
     try:
         db.session.commit()

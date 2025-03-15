@@ -6,6 +6,7 @@ app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ESD213password!@116.15.73.191:3306/payment'
 
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -14,17 +15,17 @@ db = SQLAlchemy(app)
 class Payment(db.Model):
     __tablename__ = 'payment'
     
-    paymentID = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    appointmentID = db.Column(db.Integer, nullable=False)
+    payment_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    appointment_id = db.Column(db.Integer, nullable=False)
     status = db.Column(db.Boolean, default=False)  # False means not paid, True means paid
-    paymentAmount = db.Column(db.Float, nullable=False)
+    payment_amount = db.Column(db.Float, nullable=False)
 
     def json(self):
         return {
-            "payment_id": self.paymentID,
-            "appointment_id": self.appointmentID,
+            "payment_id": self.payment_id,
+            "appointment_id": self.appointment_id,
             "status": self.status,
-            "payment_amount": self.paymentAmount
+            "payment_amount": self.payment_amount
         }
 
 
@@ -39,15 +40,15 @@ def create_payment():
         return jsonify({"error": "Missing appointment_id or payment_amount"}), 400
 
     new_payment = Payment(
-        appointmentID=data['appointment_id'],
-        paymentAmount=data['payment_amount'],
+        appointment_id=data['appointment_id'],
+        payment_amount=data['payment_amount'],
         status=False  
     )
 
     try:
         db.session.add(new_payment)
         db.session.commit()
-        return jsonify({"payment_id": new_payment.paymentID, "status": new_payment.status}), 201
+        return jsonify({"payment_id": new_payment.payment_id, "status": new_payment.status}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -58,7 +59,7 @@ def check_payment(payment_id):
     if not payment:
         return jsonify({"error": "Payment not found"}), 404
 
-    return jsonify({"payment_id": payment.paymentID, "success": payment.status}), 200
+    return jsonify({"payment_id": payment.payment_id, "success": payment.status}), 200
 
 
 @app.route("/payment", methods=['PATCH'])
