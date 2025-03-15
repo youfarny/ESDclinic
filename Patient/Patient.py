@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///patients.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ESD213password!@116.15.73.191:3306/patient'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -13,22 +13,22 @@ db = SQLAlchemy(app)
 class Patient(db.Model):
     __tablename__ = 'patient'
     
-    patientID = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    patient_contact = db.Column(db.Integer, nullable=False)
-    insurance = db.Column(db.Boolean, default=False)
-    patientName = db.Column(db.String(100), nullable=False)
-    address = db.Column(db.String(200), nullable=False)
+    patient_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    patient_name = db.Column(db.String(100), nullable=False)
     patient_password = db.Column(db.String(100), nullable=False)
-    allergies = db.Column(db.JSON, nullable=True)
+    patient_contact = db.Column(db.Integer, nullable=False)
+    patient_address = db.Column(db.String(200), nullable=False)
+    patient_insurance = db.Column(db.Boolean, default=False)
+    patient_allergies = db.Column(db.JSON, nullable=True)
 
     def json(self):
         return {
-            "patient_id": self.patientID,
+            "patient_id": self.patient_id,
             "patient_contact": self.patient_contact,
-            "insurance": self.insurance,
-            "patient_name": self.patientName,
-            "address": self.address,
-            "allergies": self.allergies
+            "patient_insurance": self.patient_insurance,
+            "patient_name": self.patient_name,
+            "patient_address": self.patient_address,
+            "patient_allergies": self.patient_allergies
         }
 
 
@@ -38,11 +38,11 @@ with app.app_context():
 
 @app.route("/patient/authenticate/<int:patient_id>&<string:patient_password>", methods=['GET'])
 def authenticate_patient(patient_id, patient_password):
-    patient = Patient.query.filter_by(patientID=patient_id, patient_password=patient_password).first()
+    patient = Patient.query.filter_by(patient_id=patient_id, patient_password=patient_password).first()
     if not patient:
         return jsonify({"error": "Invalid credentials"}), 401
     
-    return jsonify({"patient_id": patient.patientID, "patient_name": patient.patientName}), 200
+    return jsonify({"patient_id": patient.patient_id, "patient_name": patient.patient_name}), 200
 
 
 @app.route("/patient/allergies/<int:patient_id>", methods=['GET'])
@@ -51,7 +51,7 @@ def get_patient_allergies(patient_id):
     if not patient:
         return jsonify({"error": "Patient not found"}), 404
 
-    return jsonify({"patient_id": patient.patientID, "allergies": patient.allergies}), 200
+    return jsonify({"patient_id": patient.patient_id, "allergies": patient.patient_allergies}), 200
 
 
 @app.route("/patient/insurance/<int:patient_id>", methods=['GET'])
@@ -61,32 +61,32 @@ def get_patient_insurance(patient_id):
         return jsonify({"error": "Patient not found"}), 404
 
     return jsonify({
-        "patient_id": patient.patientID,
+        "patient_id": patient.patient_id,
         "patient_contact": patient.patient_contact,
-        "patient_address": patient.address,
-        "insurance": patient.insurance
+        "patient_address": patient.patient_address,
+        "patient_insurance": patient.patient_insurance
     }), 200
 
 
 @app.route("/patient", methods=['POST'])
 def create_patient():
     data = request.get_json()
-    if not data or not all(key in data for key in ["patient_contact", "patient_name", "address", "patient_password"]):
+    if not data or not all(key in data for key in ["patient_contact", "patient_name", "patient_address", "patient_password"]):
         return jsonify({"error": "Missing required fields"}), 400
 
     new_patient = Patient(
         patient_contact=data["patient_contact"],
-        insurance=data.get("insurance", False),
-        patientName=data["patient_name"],
-        address=data["address"],
+        patient_insurance=data.get("patient_insurance", False),
+        patient_name=data["patient_name"],
+        patient_address=data["patient_address"],
         patient_password=data["patient_password"],
-        allergies=data.get("allergies", [])
+        patient_allergies=data.get("patient_allergies", [])
     )
 
     try:
         db.session.add(new_patient)
         db.session.commit()
-        return jsonify({"message": "Patient created successfully", "patient_id": new_patient.patientID}), 201
+        return jsonify({"message": "Patient created successfully", "patient_id": new_patient.patient_id}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -100,16 +100,16 @@ def update_patient(patient_id):
     data = request.get_json()
     if "patient_contact" in data:
         patient.patient_contact = data["patient_contact"]
-    if "insurance" in data:
-        patient.insurance = data["insurance"]
+    if "patient_insurance" in data:
+        patient.insurance = data["patient_insurance"]
     if "patient_name" in data:
         patient.patientName = data["patient_name"]
-    if "address" in data:
-        patient.address = data["address"]
+    if "patient_address" in data:
+        patient.address = data["patient_address"]
     if "patient_password" in data:
         patient.patient_password = data["patient_password"]
-    if "allergies" in data:
-        patient.allergies = data["allergies"]
+    if "patient_allergies" in data:
+        patient.allergies = data["patient_allergies"]
 
     try:
         db.session.commit()
