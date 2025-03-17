@@ -8,13 +8,13 @@ from invokes import invoke_http
 app = Flask(__name__)
 CORS(app)
 
-appointment_URL = "http://localhost:5000/appointment"
-doctor_URL = "http://localhost:5001/doctor"
-patient_URL = "http://localhost:5002/patient"
-notification_URL = "http://localhost:5003/notification"
-prescription_URL = "http://localhost:5004/prescription"
-payment_URL = "http://localhost:5005/payment"
-error_URL = "http://localhost:5006/error"
+appointment_URL = "http://116.15.73.191:5000/appointment"
+doctor_URL = "http://116.15.73.191:5001/doctor"
+patient_URL = "http://116.15.73.191:5002/patient"
+notification_URL = "http://116.15.73.191:5003/notification"
+prescription_URL = "http://116.15.73.191:5004/prescription"
+payment_URL = "http://116.15.73.191:5005/payment"
+error_URL = "http://116.15.73.191:5006/error"
 
 @app.route("/process_appointment", methods=['POST'])
 def process_appointment():
