@@ -27,7 +27,7 @@ with app.app_context():
     db.create_all()
 
 
-@app.route("prescription", methods=['POST'])
+@app.route("/prescription", methods=['POST'])
 def create_prescription():
     data = request.get_json()
     if not data or 'medicine' not in data or 'appointment_id' not in data:
