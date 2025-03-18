@@ -1,0 +1,5 @@
+FROM python:3.9
+WORKDIR /app/send_notification
+COPY . /app/send_notification
+RUN pip install -r /app/send_notification/requirements.txt
+CMD ["python", "send_notification.py"]
