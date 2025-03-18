@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flasgger import Swagger
 
 app = Flask(__name__)
 
@@ -10,6 +11,8 @@ db = SQLAlchemy(app)
 
 with app.app_context():
     db.create_all()
+
+swagger = Swagger(app)
 
 
 class Doctor(db.Model):
@@ -30,6 +33,28 @@ class Doctor(db.Model):
 
 @app.route("/doctor", methods=['POST'])
 def create_doctor():
+    """
+    Create a new doctor
+    ---
+    tags:
+      - Doctor
+    parameters:
+      - name: doctor_name
+        in: body
+        type: string
+        required: true
+        description: The name of the doctor to create
+    responses:
+      201:
+        description: The doctor was successfully created
+        schema:
+          id: Doctor
+          properties:
+            doctor_id:
+              type: integer
+              description: The doctor ID
+              example: 1
+    """
     data = request.get_json()
     if not data or 'doctor_name' not in data:
         return jsonify({"error": "Missing doctor_name"}), 400
@@ -45,6 +70,34 @@ def create_doctor():
 
 @app.route("/doctor/<int:doctor_id>", methods=['GET'])
 def get_doctor_by_id(doctor_id):
+    """
+    Get a doctor by ID
+    ---
+    tags:
+      - Doctor
+    parameters:
+      - name: doctor_id
+        in: path
+        type: integer
+        required: true
+        description: The doctor ID to retrieve
+    responses:
+      200:
+        description: A single doctor
+        schema:
+          id: Doctor
+          properties:
+            doctor_id:
+              type: integer
+              description: The doctor ID
+              example: 1
+            doctor_name:
+              type: string
+              description: The name of the doctor
+              example: "Dr. John Doe"
+      404:
+        description: Doctor not found
+    """
     doctor = Doctor.query.get(doctor_id)
     if not doctor:
         return jsonify({"error": "Doctor not found"}), 404
@@ -53,6 +106,34 @@ def get_doctor_by_id(doctor_id):
 
 @app.route("/doctor_name/<string:doctor_name>", methods=['GET'])
 def get_doctor_by_name(doctor_name):
+    """
+    Get a doctor by name
+    ---
+    tags:
+      - Doctor
+    parameters:
+      - name: doctor_name
+        in: path
+        type: string
+        required: true
+        description: The name of the doctor to search for
+    responses:
+      200:
+        description: A single doctor
+        schema:
+          id: Doctor
+          properties:
+            doctor_id:
+              type: integer
+              description: The doctor ID
+              example: 1
+            doctor_name:
+              type: string
+              description: The name of the doctor
+              example: "Dr. John Doe"
+      404:
+        description: Doctor not found
+    """
     doctor = Doctor.query.filter_by(doctor_name=doctor_name).first()
     if not doctor:
         return jsonify({"error": "Doctor not found"}), 404
@@ -62,6 +143,24 @@ def get_doctor_by_name(doctor_name):
 
 @app.route("/doctors", methods=['GET'])
 def get_all_doctors():
+    """
+    Get all doctors
+    ---
+    tags:
+      - Doctor
+    responses:
+      200:
+        description: A list of all doctors
+        schema:
+          id: DoctorList
+          properties:
+            doctors:
+              type: array
+              items:
+                $ref: '#/definitions/Doctor'
+      404:
+        description: No doctors found
+    """
     doctors = Doctor.query.all()
     if not doctors:
         return jsonify({"message": "No doctors found"}), 404
@@ -70,8 +169,40 @@ def get_all_doctors():
 
 
 @app.route("/doctor/<int:doctor_id>", methods=['PUT'])
-
 def update_doctor(doctor_id):
+    """
+    Update a doctor's information
+    ---
+    tags:
+      - Doctor
+    parameters:
+      - name: doctor_id
+        in: path
+        type: integer
+        required: true
+        description: The doctor ID to update
+      - name: doctor_name
+        in: body
+        type: string
+        required: true
+        description: The new name of the doctor
+    responses:
+      200:
+        description: The doctor was updated
+        schema:
+          id: Doctor
+          properties:
+            doctor_id:
+              type: integer
+              description: The doctor ID
+              example: 1
+            doctor_name:
+              type: string
+              description: The name of the doctor
+              example: "Dr. John Smith"
+      404:
+        description: Doctor not found
+    """
     doctor = Doctor.query.get(doctor_id)
     if not doctor:
         return jsonify({"error": "Doctor not found"}), 404
@@ -89,6 +220,23 @@ def update_doctor(doctor_id):
 
 @app.route("/doctor/<int:doctor_id>", methods=['DELETE'])
 def delete_doctor(doctor_id):
+    """
+    Delete a doctor by ID
+    ---
+    tags:
+      - Doctor
+    parameters:
+      - name: doctor_id
+        in: path
+        type: integer
+        required: true
+        description: The doctor ID to delete
+    responses:
+      200:
+        description: The doctor was deleted
+      404:
+        description: Doctor not found
+    """
     doctor = Doctor.query.get(doctor_id)
     if not doctor:
         return jsonify({"error": "Doctor not found"}), 404

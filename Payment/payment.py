@@ -1,16 +1,17 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flasgger import Swagger
 
 app = Flask(__name__)
 
-
+# Database Config
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ESD213password!@116.15.73.191:3306/payment'
-
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+# Initialize Swagger
+swagger = Swagger(app)
 
 class Payment(db.Model):
     __tablename__ = 'payment'
@@ -28,13 +29,43 @@ class Payment(db.Model):
             "payment_amount": self.payment_amount
         }
 
-
 with app.app_context():
     db.create_all()
 
 
 @app.route("/payment", methods=['POST'])
 def create_payment():
+    """
+    Create a new payment record
+    ---
+    tags:
+      - Payment
+    parameters:
+      - name: body
+        in: body
+        required: true
+        description: Payment data to create a new payment
+        schema:
+          type: object
+          properties:
+            appointment_id:
+              type: integer
+            payment_amount:
+              type: number
+              format: float
+    responses:
+      201:
+        description: Payment successfully created
+        schema:
+          type: object
+          properties:
+            payment_id:
+              type: integer
+            status:
+              type: boolean
+      400:
+        description: Missing appointment_id or payment_amount
+    """
     data = request.get_json()
     if not data or 'appointment_id' not in data or 'payment_amount' not in data:
         return jsonify({"error": "Missing appointment_id or payment_amount"}), 400
@@ -55,6 +86,30 @@ def create_payment():
 
 @app.route("/payment/<int:payment_id>", methods=['GET'])
 def check_payment(payment_id):
+    """
+    Check payment status
+    ---
+    tags:
+      - Payment
+    parameters:
+      - name: payment_id
+        in: path
+        required: true
+        description: The payment ID to check status
+        type: integer
+    responses:
+      200:
+        description: Payment found with its status
+        schema:
+          type: object
+          properties:
+            payment_id:
+              type: integer
+            success:
+              type: boolean
+      404:
+        description: Payment not found
+    """
     payment = Payment.query.get(payment_id)
     if not payment:
         return jsonify({"error": "Payment not found"}), 404
@@ -64,6 +119,29 @@ def check_payment(payment_id):
 
 @app.route("/payment", methods=['PATCH'])
 def update_payment():
+    """
+    Update payment status to 'paid'
+    ---
+    tags:
+      - Payment
+    parameters:
+      - name: body
+        in: body
+        required: true
+        description: Payment ID to mark as paid
+        schema:
+          type: object
+          properties:
+            payment_id:
+              type: integer
+    responses:
+      200:
+        description: Payment successfully updated to 'paid'
+      400:
+        description: Missing payment_id
+      404:
+        description: Payment not found
+    """
     data = request.get_json()
     if not data or 'payment_id' not in data:
         return jsonify({"error": "Missing payment_id"}), 400
@@ -79,11 +157,27 @@ def update_payment():
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-    
-    
+
+
 @app.route("/payment/<int:payment_id>", methods=['DELETE'])
 def delete_payment(payment_id):
+    """
+    Delete a payment record
+    ---
+    tags:
+      - Payment
+    parameters:
+      - name: payment_id
+        in: path
+        required: true
+        description: The payment ID to delete
+        type: integer
+    responses:
+      200:
+        description: Payment deleted successfully
+      404:
+        description: Payment not found
+    """
     payment = Payment.query.get(payment_id)
     if not payment:
         return jsonify({"error": "Payment not found"}), 404
@@ -94,10 +188,6 @@ def delete_payment(payment_id):
         return jsonify({"message": "Payment deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-    
-
-
 
 
 if __name__ == "__main__":

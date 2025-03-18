@@ -1,19 +1,21 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flasgger import Swagger
 
 app = Flask(__name__)
 
-
+# Database Config
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ESD213password!@116.15.73.191:3306/patient'
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+# Initialize Swagger
+swagger = Swagger(app)
 
 class Patient(db.Model):
     __tablename__ = 'patient'
-    
+
     patient_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     patient_name = db.Column(db.String(100), nullable=False)
     patient_password = db.Column(db.String(100), nullable=False)
@@ -32,31 +34,110 @@ class Patient(db.Model):
             "patient_allergies": self.patient_allergies
         }
 
-
 with app.app_context():
     db.create_all()
 
-
 @app.route("/patient/authenticate/<int:patient_id>&<string:patient_password>", methods=['GET'])
 def authenticate_patient(patient_id, patient_password):
+    """
+    Authenticate a patient using patient_id and password
+    ---
+    tags:
+      - Patient
+    parameters:
+      - name: patient_id
+        in: path
+        type: integer
+        required: true
+        description: The patient's unique ID
+      - name: patient_password
+        in: path
+        type: string
+        required: true
+        description: The patient's password
+    responses:
+      200:
+        description: Patient successfully authenticated
+        schema:
+          type: object
+          properties:
+            patient_id:
+              type: integer
+            patient_name:
+              type: string
+      401:
+        description: Invalid credentials
+    """
     patient = Patient.query.filter_by(patient_id=patient_id, patient_password=patient_password).first()
     if not patient:
         return jsonify({"error": "Invalid credentials"}), 401
     
     return jsonify({"patient_id": patient.patient_id, "patient_name": patient.patient_name}), 200
 
-
 @app.route("/patient/allergies/<int:patient_id>", methods=['GET'])
 def get_patient_allergies(patient_id):
+    """
+    Get a patient's allergies
+    ---
+    tags:
+      - Patient
+    parameters:
+      - name: patient_id
+        in: path
+        type: integer
+        required: true
+        description: The patient's unique ID
+    responses:
+      200:
+        description: A list of the patient's allergies
+        schema:
+          type: object
+          properties:
+            patient_id:
+              type: integer
+            allergies:
+              type: array
+              items:
+                type: string
+      404:
+        description: Patient not found
+    """
     patient = Patient.query.get(patient_id)
     if not patient:
         return jsonify({"error": "Patient not found"}), 404
 
     return jsonify({"patient_id": patient.patient_id, "allergies": patient.patient_allergies}), 200
 
-
 @app.route("/patient/insurance/<int:patient_id>", methods=['GET'])
 def get_patient_insurance(patient_id):
+    """
+    Get a patient's insurance details
+    ---
+    tags:
+      - Patient
+    parameters:
+      - name: patient_id
+        in: path
+        type: integer
+        required: true
+        description: The patient's unique ID
+    responses:
+      200:
+        description: The patient's insurance details
+        schema:
+          type: object
+          properties:
+            patient_id:
+              type: integer
+            patient_contact:
+              type: integer
+            patient_address:
+              type: string
+            patient_insurance:
+              type: boolean
+      404:
+        description: Patient not found
+    """
     patient = Patient.query.get(patient_id)
     if not patient:
         return jsonify({"error": "Patient not found"}), 404
@@ -68,9 +149,48 @@ def get_patient_insurance(patient_id):
         "patient_insurance": patient.patient_insurance
     }), 200
 
-
 @app.route("/patient", methods=['POST'])
 def create_patient():
+    """
+    Create a new patient
+    ---
+    tags:
+      - Patient
+    parameters:
+      - name: body
+        in: body
+        required: true
+        description: Patient data to create
+        schema:
+          type: object
+          properties:
+            patient_contact:
+              type: integer
+            patient_name:
+              type: string
+            patient_address:
+              type: string
+            patient_password:
+              type: string
+            patient_insurance:
+              type: boolean
+            patient_allergies:
+              type: array
+              items:
+                type: string
+    responses:
+      201:
+        description: Patient created successfully
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+            patient_id:
+              type: integer
+      400:
+        description: Missing required fields
+    """
     data = request.get_json()
     if not data or not all(key in data for key in ["patient_contact", "patient_name", "patient_address", "patient_password"]):
         return jsonify({"error": "Missing required fields"}), 400
@@ -91,9 +211,46 @@ def create_patient():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route("/patient/<int:patient_id>", methods=['PUT'])
 def update_patient(patient_id):
+    """
+    Update patient details
+    ---
+    tags:
+      - Patient
+    parameters:
+      - name: patient_id
+        in: path
+        type: integer
+        required: true
+        description: The patient's unique ID
+      - name: body
+        in: body
+        required: true
+        description: Updated patient data
+        schema:
+          type: object
+          properties:
+            patient_contact:
+              type: integer
+            patient_insurance:
+              type: boolean
+            patient_name:
+              type: string
+            patient_address:
+              type: string
+            patient_password:
+              type: string
+            patient_allergies:
+              type: array
+              items:
+                type: string
+    responses:
+      200:
+        description: Patient updated successfully
+      404:
+        description: Patient not found
+    """
     patient = Patient.query.get(patient_id)
     if not patient:
         return jsonify({"error": "Patient not found"}), 404
@@ -102,15 +259,15 @@ def update_patient(patient_id):
     if "patient_contact" in data:
         patient.patient_contact = data["patient_contact"]
     if "patient_insurance" in data:
-        patient.insurance = data["patient_insurance"]
+        patient.patient_insurance = data["patient_insurance"]
     if "patient_name" in data:
-        patient.patientName = data["patient_name"]
+        patient.patient_name = data["patient_name"]
     if "patient_address" in data:
-        patient.address = data["patient_address"]
+        patient.patient_address = data["patient_address"]
     if "patient_password" in data:
         patient.patient_password = data["patient_password"]
     if "patient_allergies" in data:
-        patient.allergies = data["patient_allergies"]
+        patient.patient_allergies = data["patient_allergies"]
 
     try:
         db.session.commit()
@@ -120,6 +277,23 @@ def update_patient(patient_id):
 
 @app.route("/patient/<int:patient_id>", methods=['DELETE'])
 def delete_patient(patient_id):
+    """
+    Delete a patient by ID
+    ---
+    tags:
+      - Patient
+    parameters:
+      - name: patient_id
+        in: path
+        type: integer
+        required: true
+        description: The patient's unique ID
+    responses:
+      200:
+        description: Patient deleted successfully
+      404:
+        description: Patient not found
+    """
     patient = Patient.query.get(patient_id)
     if not patient:
         return jsonify({"error": "Patient not found"}), 404
@@ -130,7 +304,6 @@ def delete_patient(patient_id):
         return jsonify({"message": "Patient deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5102)
