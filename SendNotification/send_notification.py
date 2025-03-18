@@ -10,14 +10,20 @@ from invokes import invoke_http
 app = Flask(__name__)
 CORS(app)
 
-# Microservice URLs
-notification_URL = "http://116.15.73.191:5003/notification"
-patient_URL = "http://116.15.73.191:5002/patient"
-doctor_URL = "http://116.15.73.191:5001/doctor"
-appointment_URL = "http://116.15.73.191:5000/appointment"
+from os import environ
+
+# Get the IP address from an environment variable, defaulting to "116.15.73.191" if not set
+ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
+
+# Define URLs using the IP address from the environment variable
+appointment_URL = f"http://{ip_address}:5000/appointment"
+doctor_URL = f"http://{ip_address}:5001/doctor"
+patient_URL = f"http://{ip_address}:5002/patient"
+notification_URL = f"http://{ip_address}:5003/notification"
+error_URL = f"http://{ip_address}:5006/error"
 
 # RabbitMQ configuration
-rabbit_host = "116.15.73.191"
+rabbit_host = ip_address
 rabbit_port = 5672
 exchange_name = "notification_topic"
 exchange_type = "topic"

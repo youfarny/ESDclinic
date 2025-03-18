@@ -8,13 +8,20 @@ from invokes import invoke_http
 app = Flask(__name__)
 CORS(app)
 
-appointment_URL = "http://116.15.73.191:5000/appointment"
-doctor_URL = "http://116.15.73.191:5001/doctor"
-patient_URL = "http://116.15.73.191:5002/patient"
-notification_URL = "http://116.15.73.191:5003/notification"
-prescription_URL = "http://116.15.73.191:5004/prescription"
-payment_URL = "http://116.15.73.191:5005/payment"
-error_URL = "http://116.15.73.191:5006/error"
+from os import environ
+
+# Get the IP address from an environment variable, defaulting to "116.15.73.191" if not set
+ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
+
+# Define URLs using the IP address from the environment variable
+appointment_URL = f"http://{ip_address}:5000/appointment"
+doctor_URL = f"http://{ip_address}:5001/doctor"
+patient_URL = f"http://{ip_address}:5002/patient"
+notification_URL = f"http://{ip_address}:5003/notification"
+prescription_URL = f"http://{ip_address}:5004/prescription"
+payment_URL = f"http://{ip_address}:5005/payment"
+error_URL = f"http://{ip_address}:5006/error"
+
 
 @app.route("/process_appointment", methods=['POST'])
 def process_appointment():
