@@ -5,7 +5,7 @@ services:
       context: ./doctor
       dockerfile: Dockerfile
     ports:
-      - "5001:5001"
+      - "5101:5101"
     volumes:
       - ./doctor:/app/doctor  # Enable live updates
 
@@ -14,7 +14,7 @@ services:
       context: ./patient
       dockerfile: Dockerfile
     ports:
-      - "5002:5002"
+      - "5102:5102"
     volumes:
       - ./patient:/app/patient
 
@@ -23,7 +23,7 @@ services:
       context: ./payment
       dockerfile: Dockerfile
     ports:
-      - "5003:5003"
+      - "5105:5105"
     volumes:
       - ./payment:/app/payment
 
@@ -32,9 +32,19 @@ services:
       context: ./prescription
       dockerfile: Dockerfile
     ports:
-      - "5004:5004"
+      - "5104:5104"
     volumes:
       - ./prescription:/app/prescription
+
+
+  queue:
+    build:
+      context: ./queue
+      dockerfile: Dockerfile
+    ports:
+      - "5103:5103"
+    volumes:
+      - ./queue:/app/queue
 
   # notification:
   #   build:
@@ -50,7 +60,7 @@ services:
   #     context: ./appointment
   #     dockerfile: Dockerfile
   #   ports:
-  #     - "5000:5000"
+  #     - "5100:5100"
   #   volumes:
   #     - ./appointment:/app/appointment
 
