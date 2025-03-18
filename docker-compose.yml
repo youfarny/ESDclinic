@@ -1,5 +1,15 @@
 version: '3.8'
 services:
+
+  appointment:
+    build:
+      context: ./appointment
+      dockerfile: Dockerfile
+    ports:
+      - "5100:5100"
+    volumes:
+      - ./appointment:/app/appointment
+
   doctor:
     build:
       context: ./doctor

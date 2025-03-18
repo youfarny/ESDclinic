@@ -44,7 +44,7 @@ def create_prescription():
     
     
 
-@app.route("/prescriptions", methods=['GET'])
+@app.route("/prescription", methods=['GET'])
 def get_all_prescriptions():
     prescriptions = Prescription.query.all()
     if not prescriptions:   
