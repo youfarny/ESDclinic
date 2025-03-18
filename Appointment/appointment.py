@@ -182,6 +182,8 @@ def start_appointment():
         description: Missing required fields
     """
     data = request.get_json()
+        # not sure if we still integrating the external recommendations api so ill just put notes first 
+    # also assuming that the doctor keys in the start time himself? or should we set timer for this? 
 
     if "appointment_id" not in data or "notes" not in data or "startTime" not in data:
         return jsonify({"error": "Missing required fields"}), 400
