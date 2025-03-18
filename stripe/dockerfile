@@ -1,0 +1,17 @@
+# Use Python image
+FROM python:3.9
+
+# Set working directory
+WORKDIR /app/stripe
+
+# Copy project files
+COPY . /app/stripe
+
+# Install dependencies
+RUN pip install -r /app/stripe/requirements.txt
+
+# Expose the Flask app port
+EXPOSE 5200
+
+# Run the application
+CMD ["python", "app.py"]

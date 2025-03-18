@@ -56,6 +56,17 @@ services:
     volumes:
       - ./queue:/app/queue
 
+  stripe:
+    build: 
+      context: ./stripe
+      dockerfile: dockerfile
+    ports:
+      - "5200:5200"
+    env_file: ./stripe/.env
+    # depends_on:
+    #   - appointment
+    #   - doctor
+
   # notification:
   #   build:
   #     context: ./notification
