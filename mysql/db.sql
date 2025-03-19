@@ -25,18 +25,18 @@ CREATE DATABASE `queue` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0
 CREATE TABLE `queue`.`queue` (
   `appointment_id` INT NOT NULL,
   `doctor_id` INT NOT NULL,
-  `patient_id` INT NOT NULL,
+  `patient_contact` INT NOT NULL,
   PRIMARY KEY (`appointment_id`),
   UNIQUE INDEX `appointment_id_UNIQUE` (`appointment_id` ASC) VISIBLE);
   
   -- Insert fake queue
-INSERT INTO `queue`.`queue` (appointment_id, doctor_id, patient_id)
+INSERT INTO `queue`.`queue` (appointment_id, doctor_id, patient_contact)
 VALUES 
-(1, 1, 1),
-(2, 2, 2),
-(3, 3, 3),
-(4, 1, 4),
-(5, 2, 5);
+(1, 1, 12345678),
+(2, 2, 12345678),
+(3, 3, 12345678),
+(4, 1, 12345678),
+(5, 2, 12345678);
 
 DROP DATABASE IF EXISTS appointment;  
 CREATE DATABASE `appointment` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
@@ -49,20 +49,22 @@ CREATE TABLE `appointment`.`appointment` (
   `doctor_id` INT NULL,
   `prescription_id` INT NULL,
   `payment_id` INT NULL,
-  `start_time` TIME NULL,
-  `end_time` TIME NULL,
+  `start_time` DATETIME NULL,
+  `end_time` DATETIME NULL,
   PRIMARY KEY (`appointment_id`),
   UNIQUE INDEX `appointment_id_UNIQUE` (`appointment_id` ASC) VISIBLE);
   
   -- Insert fake appointments
-INSERT INTO `appointment`.`appointment` (patient_id, patient_symptoms, notes, diagnosis, doctor_id, prescription_id, payment_id, start_time, end_time)
+INSERT INTO `appointment`.`appointment` 
+    (patient_id, patient_symptoms, notes, diagnosis, doctor_id, prescription_id, payment_id, start_time, end_time)
 VALUES 
-(1, 'Fever, headache', 'Mild fever observed', 'Viral infection', 1, 1, 1, '09:00:00', '09:30:00'),
-(2, 'Stomach pain', 'Abdominal tenderness', 'Food poisoning', 2, 2, 2, '10:00:00', '10:20:00'),
-(3, 'Skin rash', 'Red patches on skin', 'Allergic reaction', 3, 3, 3, '11:00:00', '11:15:00'),
-(4, 'Back pain', 'Lower back discomfort', 'Muscle strain', 1, 4, 4, '13:00:00', '13:45:00'),
-(5, 'Cough and sore throat', 'Mild throat redness', 'Common cold', 2, 5, 5, '14:00:00', '14:30:00');
-
+    (1, 'Fever, headache', 'Mild fever observed', 'Viral infection', 1, 1, 1, '2025-03-18 09:00:00', '2025-03-18 09:30:00'),
+    (2, 'Stomach pain', 'Abdominal tenderness', 'Food poisoning', 2, 2, 2, '2025-03-18 10:00:00', '2025-03-18 10:20:00'),
+    (3, 'Skin rash', 'Red patches on skin', 'Allergic reaction', 3, 3, 3, '2025-03-18 11:00:00', '2025-03-18 11:15:00'),
+    (4, 'Back pain', 'Lower back discomfort', 'Muscle strain', 1, 4, 4, '2025-03-18 13:00:00', '2025-03-18 13:45:00'),
+    (5, 'Cough and sore throat', 'Mild throat redness', 'Common cold', 2, 5, 5, '2025-03-18 14:00:00', '2025-03-18 14:30:00');
+    
+    
 DROP DATABASE IF EXISTS doctor;  
 CREATE DATABASE `doctor` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 CREATE TABLE `doctor`.`doctor` (
