@@ -108,6 +108,38 @@ def get_patient_allergies(patient_id):
 
     return jsonify({"patient_id": patient.patient_id, "allergies": patient.patient_allergies}), 200
 
+@app.route("/patient/contact/<int:patient_id>", methods=['GET'])
+def get_patient_contact(patient_id):
+    """
+    Get a patient's contact details
+    ---
+    tags:
+      - Patient
+    parameters:
+      - name: patient_id
+        in: path
+        type: integer
+        required: true
+        description: The patient's unique ID
+    responses:
+      200:
+        description: Patient contact details retrieved successfully
+        schema:
+          type: object
+          properties:
+            patient_id:
+              type: integer
+            patient_contact:
+              type: string
+      404:
+        description: Patient not found
+    """
+    patient = Patient.query.get(patient_id)
+    if not patient:
+        return jsonify({"error": "Patient not found"}), 404
+
+    return jsonify({"patient_id": patient.patient_id, "patient_contact": patient.patient_contact}), 200
+
 @app.route("/patient/insurance/<int:patient_id>", methods=['GET'])
 def get_patient_insurance(patient_id):
     """
