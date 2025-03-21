@@ -97,6 +97,7 @@ def create_appointment():
         return jsonify({"error": "Missing required fields"}), 400
 
     new_appointment = Queue(
+        appointment_id=data["appointment_id"],
         doctor_id=data["doctor_id"],
         patient_contact=data["patient_contact"]
     )
