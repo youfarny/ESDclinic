@@ -9,6 +9,8 @@ app = Flask(__name__)
 CORS(app)
 
 # Define service URLs
+# ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
+
 ip_address = 'localhost'
 appointment_URL = f"http://{ip_address}:5100/appointment"
 doctor_URL = f"http://{ip_address}:5101/doctor"
@@ -16,28 +18,8 @@ patient_URL = f"http://{ip_address}:5102/patient/contact"
 queue_URL = f"http://{ip_address}:5103/queue"
 prescription_URL = f"http://{ip_address}:5104/prescription"
 payment_URL = f"http://{ip_address}:5105/payment"
-
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import os
-import sys
-from os import environ
-from invokes import invoke_http
-
-app = Flask(__name__)
-CORS(app)
-
-# Define service URLs
-ip_address = 'localhost'
-appointment_URL = f"http://{ip_address}:5100/appointment"
-doctor_URL = f"http://{ip_address}:5101/doctor"
-patient_URL = f"http://{ip_address}:5102/patient/contact"
-queue_URL = f"http://{ip_address}:5103/queue"
-prescription_URL = f"http://{ip_address}:5104/prescription"
-payment_URL = f"http://{ip_address}:5105/payment"
-
-@app.route("/process_appointment", methods=['POST'])
-def process_appointment():
+@app.route("/process_appointment_before", methods=['POST'])
+def process_appointment_before():
     if request.is_json:
         try:
             appointment_data = request.get_json()
@@ -127,7 +109,43 @@ def process_appointment():
             if "error" in queue_result:
                 return jsonify({"code": 500, "message": "Failed to add appointment to queue", "data": queue_result}), 500
 
-            # Check for prescriptions
+            return jsonify({
+                "code": 200,
+                "message": "Appointment successfully added to queue",
+                "data": {
+                    "appointment_result": appointment_result,
+                    "doctor_result": doctor_result,
+                    "queue_result": queue_result
+                }
+            }), 200
+
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            ex_str = f"{str(e)} at {str(exc_type)}: {fname}: line {str(exc_tb.tb_lineno)}"
+            print("ERROR:", ex_str)
+
+            return jsonify({
+                "code": 500,
+                "message": "Internal server error: " + ex_str
+            }), 500
+
+    return jsonify({"code": 400, "message": "Invalid JSON input"}), 400
+
+
+@app.route("/process_appointment_during", methods=['POST'])
+def process_appointment_during():
+    if request.is_json:
+        try:
+            appointment_data = request.get_json()
+            print("\nProcessing appointment during:", appointment_data)
+
+            appointment_id = appointment_data.get("appointment_id")
+            patient_id = appointment_data.get("patient_id")
+            if not appointment_id or not patient_id:
+                return jsonify({"code": 400, "message": "Missing required fields: appointment_id or patient_id"}), 400
+
+            # Check for existing prescriptions
             print("\nChecking for existing prescriptions...")
             prescription_result = invoke_http(f"{prescription_URL}/patient/{patient_id}", method='GET')
             print('Prescription result:', prescription_result)
@@ -137,7 +155,7 @@ def process_appointment():
             payment_data = {
                 "appointment_id": appointment_id,
                 "patient_id": patient_id,
-                "payment_amount": appointment_data.get("amount", 100)
+                "payment_amount": appointment_data.get("amount", 100)  # Default amount if not provided
             }
             payment_result = invoke_http(payment_URL, method='POST', json=payment_data)
             print('Payment result:', payment_result)
@@ -145,14 +163,10 @@ def process_appointment():
             if "error" in payment_result:
                 return jsonify({"code": 500, "message": "Payment processing failed", "data": payment_result}), 500
 
-            # Return success response
             return jsonify({
                 "code": 200,
-                "message": "Appointment processed successfully",
+                "message": "Appointment processed successfully during consultation",
                 "data": {
-                    "appointment_result": appointment_result,
-                    "doctor_result": doctor_result,
-                    "queue_result": queue_result,
                     "prescription_result": prescription_result,
                     "payment_result": payment_result
                 }
@@ -171,6 +185,43 @@ def process_appointment():
 
     return jsonify({"code": 400, "message": "Invalid JSON input"}), 400
 
+
+@app.route("/process_appointment_after", methods=['POST'])
+def process_appointment_after():
+    if request.is_json:
+        try:
+            appointment_data = request.get_json()
+            appointment_id = appointment_data.get("appointment_id")
+            doctor_id = appointment_data.get("doctor_id")
+
+            if not appointment_id or not doctor_id:
+                return jsonify({"code": 400, "message": "Missing required fields: appointment_id or doctor_id"}), 400
+
+            print(f"\nRemoving appointment {appointment_id} from queue...")
+            delete_result = invoke_http(f"{queue_URL}/{doctor_id}/{appointment_id}", method='DELETE')
+            print("Queue delete result:", delete_result)
+
+            if "error" in delete_result:
+                return jsonify({"code": 500, "message": "Failed to remove appointment from queue", "data": delete_result}), 500
+
+            return jsonify({
+                "code": 200,
+                "message": "Appointment successfully removed from queue",
+                "data": delete_result
+            }), 200
+
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            ex_str = f"{str(e)} at {str(exc_type)}: {fname}: line {str(exc_tb.tb_lineno)}"
+            print("ERROR:", ex_str)
+
+            return jsonify({
+                "code": 500,
+                "message": "Internal server error: " + ex_str
+            }), 500
+
+    return jsonify({"code": 400, "message": "Invalid JSON input"}), 400
 if __name__ == "__main__":
     print("Starting process_appointment microservice...")
     app.run(host="0.0.0.0", port=5000, debug=True)
