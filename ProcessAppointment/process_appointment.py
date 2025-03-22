@@ -13,7 +13,7 @@ CORS(app)
 
 ip_address = 'localhost'
 appointment_URL = f"http://{ip_address}:5100/appointment"
-doctor_URL = f"http://{ip_address}:5101/doctor"
+#doctor_URL = f"http://{ip_address}:5101/doctor"
 patient_URL = f"http://{ip_address}:5102/patient/contact"
 queue_URL = f"http://{ip_address}:5103/queue"
 prescription_URL = f"http://{ip_address}:5104/prescription"
@@ -58,7 +58,9 @@ def process_appointment_before():
             if requested_doctor_id:
                 # Case 1: Doctor is specifically requested
                 print("\nDoctor requested by patient. Fetching doctor details...")
-                doctor_result = invoke_http(f"{doctor_URL}/{requested_doctor_id}", method='GET')
+                #doctor_result = invoke_http(f"{doctor_URL}/{requested_doctor_id}", method='GET')
+                doctor_result = invoke_http(f"https://personal-73tajzpf.outsystemscloud.com/Doctor_service/rest/DoctorAPI/doctor/byid?doctor_id={requested_doctor_id}", method='GET')
+                
                 print('Doctor result:', doctor_result)
 
                 if "error" not in doctor_result:
@@ -90,7 +92,8 @@ def process_appointment_before():
                     return jsonify({"code": 500, "message": "Failed to assign doctor"}), 500
 
             # Fetch doctor details
-            doctor_result = invoke_http(f"{doctor_URL}/{selected_doctor_id}", method='GET')
+            #doctor_result = invoke_http(f"{doctor_URL}/{selected_doctor_id}", method='GET')
+            doctor_result = invoke_http(f"https://personal-73tajzpf.outsystemscloud.com/Doctor_service/rest/DoctorAPI/doctor/byid?doctor_id={requested_doctor_id}", method='GET')
             print("Selected doctor result:", doctor_result)
 
             if "error" in doctor_result:

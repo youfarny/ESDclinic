@@ -17,7 +17,7 @@ ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
 
 # Define URLs using the IP address from the environment variable
 appointment_URL = f"http://{ip_address}:5000/appointment"
-doctor_URL = f"http://{ip_address}:5001/doctor"
+#doctor_URL = f"http://{ip_address}:5001/doctor"
 patient_URL = f"http://{ip_address}:5002/patient"
 notification_URL = f"http://{ip_address}:5003/notification"
 error_URL = f"http://{ip_address}:5006/error"
@@ -154,9 +154,14 @@ def processNotification(notification_data):
         # Get doctor details
         print("  Invoking doctor microservice to get details...")
         doctor_result = invoke_http(
-            doctor_URL + "/" + str(notification_data["doctor_id"]),
-            method="GET"
-        )
+            f'https://personal-73tajzpf.outsystemscloud.com/Doctor_service/rest/DoctorAPI/doctor/byid?doctor_id={str(notification_data["doctor_id"])}', 
+            method="GET")
+           
+        # print("  Invoking doctor microservice to get details...")
+        # doctor_result = invoke_http(
+        #     doctor_URL + "/" + str(notification_data["doctor_id"]),
+        #     method="GET"
+        # )
         print(f"  doctor_result: {doctor_result}\n")
         
         if doctor_result["code"] in range(200, 300):
