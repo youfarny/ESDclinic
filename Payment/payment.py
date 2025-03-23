@@ -18,14 +18,14 @@ class Payment(db.Model):
     
     payment_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     appointment_id = db.Column(db.Integer, nullable=False)
-    status = db.Column(db.Boolean, default=False)  # False means not paid, True means paid
+    payment_status = db.Column(db.Boolean, default=False)  # False means not paid, True means paid
     payment_amount = db.Column(db.Float, nullable=False)
 
     def json(self):
         return {
             "payment_id": self.payment_id,
             "appointment_id": self.appointment_id,
-            "status": self.status,
+            "payment_status": self.payment_status,
             "payment_amount": self.payment_amount
         }
 
@@ -61,7 +61,7 @@ def create_payment():
           properties:
             payment_id:
               type: integer
-            status:
+            payment_status:
               type: boolean
       400:
         description: Missing appointment_id or payment_amount
@@ -73,13 +73,13 @@ def create_payment():
     new_payment = Payment(
         appointment_id=data['appointment_id'],
         payment_amount=data['payment_amount'],
-        status=False  
+        payment_status=False  
     )
 
     try:
         db.session.add(new_payment)
         db.session.commit()
-        return jsonify({"payment_id": new_payment.payment_id, "status": new_payment.status}), 201
+        return jsonify({"payment_id": new_payment.payment_id, "payment_status": new_payment.payment_status}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -87,7 +87,7 @@ def create_payment():
 @app.route("/payment/<int:payment_id>", methods=['GET'])
 def check_payment(payment_id):
     """
-    Check payment status
+    Check payment payment_status
     ---
     tags:
       - Payment
@@ -95,11 +95,11 @@ def check_payment(payment_id):
       - name: payment_id
         in: path
         required: true
-        description: The payment ID to check status
+        description: The payment ID to check payment_status
         type: integer
     responses:
       200:
-        description: Payment found with its status
+        description: Payment found with its payment_status
         schema:
           type: object
           properties:
@@ -114,13 +114,13 @@ def check_payment(payment_id):
     if not payment:
         return jsonify({"error": "Payment not found"}), 404
 
-    return jsonify({"payment_id": payment.payment_id, "success": payment.status}), 200
+    return jsonify({"payment_id": payment.payment_id, "success": payment.payment_status}), 200
 
 
 @app.route("/payment", methods=['PATCH'])
 def update_payment():
     """
-    Update payment status to 'paid'
+    Update payment payment_status to 'paid'
     ---
     tags:
       - Payment
@@ -150,7 +150,7 @@ def update_payment():
     if not payment:
         return jsonify({"error": "Payment not found"}), 404
 
-    payment.status = True  
+    payment.payment_status = True  
 
     try:
         db.session.commit()
