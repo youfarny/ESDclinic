@@ -17,14 +17,101 @@ class Prescription(db.Model):
     __tablename__ = 'prescription'
     
     prescription_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    medicine = db.Column(db.String(100), nullable=False)
+    medicine = db.Column(db.JSON, nullable=False)
     appointment_id = db.Column(db.Integer, nullable=False)
 
     def json(self):
         return {"prescription_id": self.prescription_id, "medicine": self.medicine, "appointment_id": self.appointment_id}
 
+class Medicine(db.Model):
+    __tablename__ = 'medicine'
+    
+    indiv_medicine = db.Column(db.String(100), primary_key=True, nullable=True)
+    cost = db.Column(db.Float, nullable=False)
+
+    def json(self):
+        return {"indiv_medicine": self.indiv_medicine, "cost": self.cost}
+
 with app.app_context():
     db.create_all()
+
+@app.route("/medicine/<string:medicine_name>", methods=['GET'])
+def get_medicine_cost(medicine_name):
+    """
+    Get the cost of a specific medicine
+    ---
+    tags:
+      - Medicine
+    parameters:
+      - name: medicine_name
+        in: path
+        type: string
+        required: true
+        description: The name of the medicine to retrieve the cost for
+    responses:
+      200:
+        description: Medicine cost retrieved successfully
+        schema:
+          type: object
+          properties:
+            medicine:
+              type: string
+            cost:
+              type: integer
+      404:
+        description: Medicine not found
+    """
+    medicine = Medicine.query.get(medicine_name)
+    if not medicine:
+        return jsonify({"error": "Medicine not found"}), 404
+
+    return jsonify({"medicine": medicine.indiv_medicine, "cost": medicine.cost}), 200
+
+@app.route("/calculate-cost", methods=['POST'])
+def calculate_medicine_cost():
+    """
+    Calculate total cost of multiple medicines
+    ---
+    tags:
+      - Medicine
+    parameters:
+      - name: body
+        in: body
+        required: true
+        description: List of medicines in JSON format
+        schema:
+          type: object
+          properties:
+            medicines:
+              type: array
+              items:
+                type: string
+              example: ["cough", "flu", "fever"]
+    responses:
+      200:
+        description: Total cost calculated successfully
+        schema:
+          type: object
+          properties:
+            total_cost:
+              type: integer
+      400:
+        description: Invalid medicine list
+    """
+    data = request.get_json()
+    if 'medicines' not in data or not isinstance(data['medicines'], list):
+        return jsonify({"error": "Invalid medicine list"}), 400
+
+    total_cost = 0
+
+    for med in data['medicines']:
+        medicine = Medicine.query.get(med)
+        if medicine:
+            total_cost += medicine.cost
+        else:
+            return jsonify({"error": f"Medicine '{med}' not found"}), 404
+
+    return jsonify({"total_cost": total_cost}), 200
 
 @app.route("/prescription", methods=['POST'])
 def create_prescription():

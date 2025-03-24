@@ -20,7 +20,7 @@ class Appointment(db.Model):
     appointment_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     patient_id = db.Column(db.Integer, nullable=False)
     doctor_id = db.Column(db.Integer, nullable=False)
-    patient_symptoms = db.Column(db.String(255), nullable=False)
+    patient_symptoms = db.Column(db.JSON, nullable=False)
     notes = db.Column(db.String(500))
     start_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
