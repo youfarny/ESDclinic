@@ -1,0 +1,126 @@
+/* Modify these styles in your global.css */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: #ffffff; /* Light blue background */
+}
+
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  /* overflow-y: auto; */
+}
+
+
+/* In your global.css */
+.content-card {
+  width: 90%;
+  max-width: 380px; /* Mobile phone width */
+  padding: 2.5rem 2rem;
+  background-color: #536b7b;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Make sure page container is properly centered */
+.page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100vh;
+  background-color: #d1eef3;
+}
+  
+/* Login specific smaller card */
+.login-card {
+  max-width: 400px;
+}
+
+  /* Navigation Bar */
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff; /* White background */
+    padding: 10px 20px;
+    border-bottom: 1px solid #6c6464; /* Light gray border */
+  }
+  
+  .navbar .logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ae2424; /* Dark gray text */
+  }
+  
+  .navbar .links {
+    display: flex;
+    gap: 15px; /* Space between links */
+  }
+  
+  .navbar .logout-btn {
+    background-color: #ff4d4d; /* Red button */
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .navbar .logout-btn:hover {
+    background-color: #ff0000; /* Darker red on hover */
+  }
+  
+  /* Page Titles */
+  .page-title {
+    text-align: center;
+    font-size: 2rem;
+    color: #333333; /* Dark gray text */
+  }
+  
+  /* Dashboard Content */
+  .dashboard-content h1 {
+    text-align: center;
+  }
+  
+  /* Cards Section */
+  .cards {
+    display: flex;
+    justify-content: space-around; /* Space between cards */
+    margin-top: 20px;
+  }
+  
+  .card {
+    background-color: #333333; /* Dark gray card background */
+    color: white; /* White text */
+    text-align: center;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  .card p {
+    font-size: 16px; /* Smaller text for labels */
+  }
+  
+  .card h2 {
+    font-size: 24px; /* Larger text for numbers */
+  }
+  
+  /* Appointments Section and Inventory Table Styles */
+  .appointments, .inventory-table {
+    margin-top: 30px;
+  }
+  
+  .appointments h2, .inventory-table h2 {
+      text-align:center}
+  /* Table Styles */
+  table {
+      width:auto;}
+  
