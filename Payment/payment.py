@@ -20,13 +20,15 @@ class Payment(db.Model):
     appointment_id = db.Column(db.Integer, nullable=False)
     payment_status = db.Column(db.Boolean, default=False)  # False means not paid, True means paid
     payment_amount = db.Column(db.Float, nullable=False)
+    insurance = db.Column(db.Boolean, default=False)
 
     def json(self):
         return {
             "payment_id": self.payment_id,
             "appointment_id": self.appointment_id,
             "payment_status": self.payment_status,
-            "payment_amount": self.payment_amount
+            "payment_amount": self.payment_amount,
+            "insurance": self.insurance
         }
 
 with app.app_context():
@@ -53,6 +55,8 @@ def create_payment():
             payment_amount:
               type: number
               format: float
+            insurance:  
+              type: boolean
     responses:
       201:
         description: Payment successfully created
@@ -67,12 +71,13 @@ def create_payment():
         description: Missing appointment_id or payment_amount
     """
     data = request.get_json()
-    if not data or 'appointment_id' not in data or 'payment_amount' not in data:
-        return jsonify({"error": "Missing appointment_id or payment_amount"}), 400
+    if not data or 'appointment_id' not in data or 'payment_amount' not in data or 'insurance' not in data:
+        return jsonify({"error": "Missing appointment_id, payment_amount or insurance"}), 400
 
     new_payment = Payment(
         appointment_id=data['appointment_id'],
         payment_amount=data['payment_amount'],
+        insurance=data['insurance'],
         payment_status=False  
     )
 
