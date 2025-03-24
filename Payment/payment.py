@@ -68,7 +68,7 @@ def create_payment():
             payment_status:
               type: boolean
       400:
-        description: Missing appointment_id or payment_amount
+        description: Missing appointment_id,payment_amount or insurance
     """
     data = request.get_json()
     if not data or 'appointment_id' not in data or 'payment_amount' not in data or 'insurance' not in data:
