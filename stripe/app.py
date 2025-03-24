@@ -1,58 +1,65 @@
-import os
+from flask import Flask, request, redirect, render_template
 import stripe
-from flask import Flask, jsonify, request
-from flask_cors import CORS
+import os
 from dotenv import load_dotenv
 
-load_dotenv()  # Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-# ✅ API: Create a Stripe Checkout Session
-@app.route("/create-checkout-session", methods=["POST"])
+@app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
+    # Hardcoded values for testing
+    appointment_id = "AP12345"
+    amount = 5000  # $50.00 in cents
+    payment_id = "PAY98765"
+
     try:
-        data = request.get_json()
-        session = stripe.checkout.Session.create(
-            payment_method_types=["card", "apple_pay", "google_pay"],
+        checkout_session = stripe.checkout.Session.create(
+            payment_intent_data={
+                'metadata': {
+                    'appointment_id': appointment_id,
+                    'payment_id': payment_id
+                }
+            },
             line_items=[
                 {
-                    "price_data": {
-                        "currency": "usd",
-                        "product_data": {"name": "Premium Service"},
-                        "unit_amount": int(data["amount"]) * 100,
+                    'price_data': {
+                        'currency': 'sgd',
+                        'unit_amount': amount,
+                        'product_data': {
+                            'name': f'Appointment {appointment_id}',
+                        },
                     },
-                    "quantity": 1,
-                }
+                    'quantity': 1,
+                },
             ],
-            mode="payment",
-            success_url="http://localhost:3000/success",
-            cancel_url="http://localhost:3000/cancel",
+            mode='payment',
+            success_url='http://localhost:5200/success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url='http://localhost:5200/cancel',
         )
-        return jsonify({"id": session.id})
+        return redirect(checkout_session.url, code=303)
     except Exception as e:
-        return jsonify(error=str(e)), 500
+        return str(e), 400
 
-# ✅ API: Webhook for Payment Confirmation
-@app.route("/webhook", methods=["POST"])
-def stripe_webhook():
-    payload = request.get_data(as_text=True)
-    sig_header = request.headers.get("Stripe-Signature")
-    endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+@app.route('/success')
+def success():
+    session_id = request.args.get('session_id')
+    session = stripe.checkout.Session.retrieve(session_id)
+    payment_intent = stripe.PaymentIntent.retrieve(session.payment_intent)
+    
+    # Here you would typically update your payment record
+    # For now, we'll just return a success message with the payment details
+    return f"Payment successful! Payment ID: {payment_intent.metadata.payment_id}, Amount: ${payment_intent.amount/100:.2f}, Appointment ID: {payment_intent.metadata.appointment_id}"
 
-    try:
-        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+@app.route('/cancel')
+def cancel():
+    return "Payment cancelled. If you have any questions, please contact support."
 
-        if event["type"] == "checkout.session.completed":
-            print("✅ Payment Successful!", event["data"]["object"])
-
-        return jsonify({"status": "success"}), 200
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5200, debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5200, debug=True)

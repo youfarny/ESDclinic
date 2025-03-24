@@ -59,10 +59,14 @@ services:
   stripe:
     build: 
       context: ./stripe
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     ports:
       - "5200:5200"
-    env_file: ./stripe/.env
+    env_file: 
+      - ./stripe/.env
+
+
+
     # depends_on:
     #   - appointment
     #   - doctor
@@ -93,3 +97,4 @@ services:
   #     - "5200:5200"
   #   volumes:
   #     - ./process_appointment:/app/process_appointment
+
