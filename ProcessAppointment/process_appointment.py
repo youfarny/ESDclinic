@@ -261,129 +261,97 @@ def process_appointment_start():
     except Exception as e:
         print("ERROR:", str(e))
         return jsonify({"code": 500, "message": "Internal server error", "error": str(e)}), 500
-
-if __name__ == "__main__":
-    app.run(debug=True)
+    
 
 
 
-
-@app.route("/process_appointment_during", methods=['POST'])
-def process_appointment_during():
+    
+@app.route("/process_appointment_end", methods=['POST'])
+def process_appointment_end():
     """
-    Handles the real-time appointment workflow during a consultation.
-    - Fetches appointment details
-    - Retrieves AI recommendations (if symptoms exist)
-    - Checks for existing prescriptions
-    - Processes payment
-    - Updates appointment with recommendations
-    - Notifies the next patient in the queue
-    - Deletes the current appointment from the queue
+    Ends an appointment by updating the appointment details with end time, diagnosis, and medicine.
+    - Creates a prescription if medicine is provided.
+    - Updates the appointment record with end time, diagnosis, and prescription ID.
     """
-    if request.is_json:
-        try:
-            appointment_data = request.get_json()
-            print("\nProcessing appointment during:", appointment_data)
+    try:
+        data = request.get_json()
+        appointment_id = data.get("appointment_id")
+        diagnosis = data.get("diagnosis", "")
+        medicine = data.get("medicine", "")
+        end_time = data.get("end_time", datetime.now().isoformat())
 
-            # Extract required fields
-            appointment_id = appointment_data.get("appointment_id")
- 
-            symptoms = appointment_data.get("symptoms", [])
+        if not appointment_id:
+            return jsonify({"code": 400, "message": "Missing required field: appointment_id"}), 400
 
-            if not appointment_id:
-                return jsonify({"code": 400, "message": "Missing required field: appointment_id"}), 400
+        # 1. Fetch Appointment Details
+        print(f"Fetching details for appointment_id: {appointment_id}")
+        appointment_response = requests.get(f"{appointment_URL}/{appointment_id}")
+        if appointment_response.status_code != 200:
+            return jsonify({"code": 404, "message": "Appointment not found"}), 404
 
-            # 1️ Retrieve appointment details (fetch patient_id & doctor_id)
-            print(f"\nFetching details for appointment_id: {appointment_id}...")
-            appointment_result = invoke_http(f"{appointment_URL}/{appointment_id}", method='GET')
+        appointment_data = appointment_response.json()
+        patient_id = appointment_data.get("patient_id")
 
-            # Validate the retrieved appointment data
-            if "error" in appointment_result:
-                return jsonify({"code": 404, "message": "Appointment not found", "data": appointment_result}), 404
-
-            patient_id = appointment_result.get("patient_id")
-            doctor_id = appointment_result.get("doctor_id")
-
-            if not patient_id or not doctor_id:
-                return jsonify({"code": 500, "message": "Invalid appointment data: Missing doctor_id or patient_id"}), 500
-
-            print(f"Retrieved patient_id: {patient_id}, doctor_id: {doctor_id}")
-
-
-            # 2️ Get AI-based recommendations if symptoms exist
-            recommendations = None
-            # if symptoms:
-            #     print("\nFetching AI recommendations for symptoms...")
-            #     ai_response = invoke_http(f"{external_API_URL}/recommendations", method='GET', params={"symptoms": symptoms})
-            #     print('AI Recommendations:', ai_response)
-
-            #     if "error" not in ai_response:
-            #         recommendations = ai_response.get("recommendations", [])
-            #     else:
-            #         print("Warning: AI recommendations failed")
-
-            # 3️ Check for existing prescriptions
-            print("\nChecking for existing prescriptions...")
-            prescription_result = invoke_http(f"{prescription_URL}/patient/{patient_id}", method='GET')
-            print('Prescription result:', prescription_result)
-
-            # 5️ Update Appointment with AI Recommendations
-            if recommendations:
-                print("\nUpdating appointment with AI recommendations...")
-                update_data = {"appointment_id": appointment_id, "recommendations": recommendations}
-                update_result = invoke_http(f"{appointment_URL}", method='PATCH', json=update_data)
-                print('Update result:', update_result)
-
-            # 6️ Notify the next patient in queue
-            print("\nFetching next appointment in queue...")
-            queue_result = invoke_http(f"{queue_URL}/next/{doctor_id}", method='GET')
-            print('Queue result:', queue_result)
-
-            if queue_result and "appointment_id" in queue_result:
-                next_appointment_id = queue_result["appointment_id"]
-                next_patient_id = queue_result.get("patient_id")
-
-                # if next_patient_id:
-                #     print("\nSending notification to next patient...")
-                #     notification_data = {
-                #         "appointment_id": next_appointment_id,
-                #         "patient_contact": queue_result.get("patient_contact")
-                #     }
-                #     notification_result = invoke_http(f"{notification_URL}", method='POST', json=notification_data)
-                #     print('Notification result:', notification_result)
-
-            # 7️ Remove the current patient from the queue
-            print(f"\n Removing processed appointment {appointment_id} from the queue...")
-            delete_queue_result = invoke_http(f"{queue_URL}/delete/{doctor_id}/{appointment_id}", method='DELETE')
-            print('Queue deletion result:', delete_queue_result)
-
-            if "error" in delete_queue_result:
-                print(" Warning: Failed to remove patient from queue:", delete_queue_result)
-
-            # 8️ Final Response
-            return jsonify({
-                "code": 200,
-                "message": "Appointment processed successfully during consultation",
-                "data": {
-                    "appointment_details": appointment_result,
-                    "ai_recommendations": recommendations,
-                    "prescription_result": prescription_result,
-                    "queue_deletion_result": delete_queue_result
+        # 2. Create Prescription if Provided
+        prescription_id = None
+        if medicine:
+            try:
+                print(f"Creating prescription for appointment_id: {appointment_id}")
+                prescription_payload = {
+                    "appointment_id": appointment_id,
+                    "medicine": medicine
                 }
-            }), 200
+                print(f"Prescription payload: {prescription_payload}")
+                prescription_response = requests.post(f"{prescription_URL}", json=prescription_payload)
+                
+                print(f"Prescription response status: {prescription_response.status_code}")
+                print(f"Prescription response content: {prescription_response.text}")
+                
+                # Accept both 200 and 201 as success status codes
+                if prescription_response.status_code in [200, 201]:
+                    prescription_data = prescription_response.json()
+                    prescription_id = prescription_data.get("prescription_id")
+                    print(f"Successfully created prescription with ID: {prescription_id}")
+                else:
+                    print(f"Warning: Failed to create prescription. Status: {prescription_response.status_code}")
+                    print(f"Response content: {prescription_response.text}")
+            except Exception as e:
+                print(f"Exception during prescription creation: {str(e)}")
+                # Continue with the appointment update even if prescription creation fails
 
-        except Exception as e:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            ex_str = f"{str(e)} at {str(exc_type)}: {fname}: line {str(exc_tb.tb_lineno)}"
-            print("ERROR:", ex_str)
+        # 3. Update Appointment with End Time, Diagnosis and Prescription ID
+        update_payload = {
+            "appointment_id": appointment_id,
+            "end_time": end_time,
+            "diagnosis": diagnosis,
+            "prescription_id": prescription_id
+        }
+            
+        print(f"Updating appointment {appointment_id} with payload: {update_payload}")
+        # Using the original endpoint that was in your code
+        update_response = requests.patch(f"{appointment_URL}/appointment_end", json=update_payload)
+        
+        if update_response.status_code != 200:
+            print(f"Failed to update appointment. Status: {update_response.status_code}")
+            print(f"Response content: {update_response.text}")
+            return jsonify({"code": 500, "message": f"Failed to update appointment: {update_response.text}"}), 500
 
-            return jsonify({
-                "code": 500,
-                "message": "Internal server error: " + ex_str
-            }), 500
+        print(f"Appointment update response: {update_response.text}")
+        
+        return jsonify({
+            "code": 200,
+            "message": "Appointment ended successfully",
+            "data": {
+                "appointment_id": appointment_id,
+                "diagnosis": diagnosis,
+                "end_time": end_time,
+                "prescription_id": prescription_id
+            }
+        }), 200
 
-    return jsonify({"code": 400, "message": "Invalid JSON input"}), 400
+    except Exception as e:
+        print("ERROR:", str(e))
+        return jsonify({"code": 500, "message": "Internal server error", "error": str(e)}), 500
 
 # AFTER APPOINTMENT
 @app.route("/process_appointment_after", methods=['POST'])
