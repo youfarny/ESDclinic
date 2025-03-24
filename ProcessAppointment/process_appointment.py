@@ -3,8 +3,9 @@ from flask_cors import CORS
 import os
 import sys
 from os import environ
+from datetime import datetime
 from invokes import invoke_http
-
+import requests
 app = Flask(__name__)
 CORS(app)
 
@@ -162,7 +163,111 @@ def process_appointment_before():
     return jsonify({"code": 400, "message": "Invalid JSON input"}), 400
 
 
-# DURING APPOINTMENT
+# START APPOINTMENT
+@app.route("/process_appointment_start", methods=['POST'])
+def process_appointment_start():
+    """
+    Starts an appointment for a doctor by retrieving the next patient from the queue.
+    - Gets the next appointment in the queue.
+    - Deletes it from the queue.
+    - Fetches appointment details.
+    - Updates the appointment with start_time and notes.
+    - Returns the updated appointment to the doctor.
+    """
+    try:
+        data = request.get_json()
+        doctor_id = data.get("doctor_id")
+        notes = data.get("notes", "")  # Optional notes
+        start_time = data.get("startTime", datetime.now().isoformat())
+
+        if not doctor_id:
+            return jsonify({"code": 400, "message": "Missing required field: doctor_id"}), 400
+
+        # Get the next appointment from the queue
+        print(f"Fetching next appointment for doctor_id: {doctor_id}")
+        queue_response = requests.get(f"{queue_URL}/next_start/{doctor_id}")
+        queue_data = queue_response.json()
+
+        if "appointment_id" not in queue_data:
+            return jsonify({"code": 404, "message": "No appointments in queue"}), 404
+
+        appointment_id = queue_data["appointment_id"]
+
+        # Delete appointment from queue
+        print(f"Deleting appointment {appointment_id} from queue...")
+        delete_response = requests.delete(f"{queue_URL}/{doctor_id}/{appointment_id}")
+        delete_data = delete_response.json()
+
+        if "error" in delete_data:
+            print(f"Warning: Failed to delete appointment {appointment_id} from queue:", delete_data)
+
+        # Get full appointment details
+        print(f"Fetching details for appointment_id: {appointment_id}")
+        appointment_response = requests.get(f"{appointment_URL}/{appointment_id}")
+
+        print(f"Appointment API Response Status: {appointment_response.status_code}")
+        print(f"Appointment API Response Content: {appointment_response.text}")
+
+        if appointment_response.status_code != 200 or not appointment_response.text.strip():
+            return jsonify({"code": 404, "message": "Appointment not found"}), 404
+
+        appointment_data = appointment_response.json()
+
+        if "error" in appointment_data:
+            return jsonify({"code": 404, "message": "Appointment not found"}), 404
+        
+        # Update appointment with start_time & notes
+        
+        update_payload = {
+            "appointment_id": appointment_id, 
+            "start_time": start_time,
+            "notes": notes
+        }
+
+        print(f"Updating appointment {appointment_id} with start_time and notes...")
+        update_payload = {
+            "appointment_id": appointment_id, 
+            "startTime": start_time,  # Ensure field name matches backend
+            "notes": notes
+        }
+
+        print(f"Sending PATCH request to {appointment_URL}/appointment_start with payload:")
+        print(update_payload)
+
+        update_response = requests.patch(f"{appointment_URL}/appointment_start", json=update_payload)
+
+        print(f"Update API Response Status: {update_response.status_code}")
+        print(f"Update API Response Content: {update_response.text}")
+
+        if update_response.status_code != 200 or not update_response.text.strip():
+            return jsonify({
+                "code": 500, 
+                "message": "Failed to update appointment", 
+                "error": "Empty response from update API"
+            }), 500
+
+        update_data = update_response.json()
+
+        if "error" in update_data:
+            return jsonify({"code": 500, "message": "Failed to update appointment", "error": update_data}), 500
+
+        # Return appointment details to the doctor
+        return jsonify({
+            "code": 200,
+            "message": "Appointment started successfully",
+            "data": appointment_data
+        }), 200
+
+    except Exception as e:
+        print("ERROR:", str(e))
+        return jsonify({"code": 500, "message": "Internal server error", "error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
+
+
 @app.route("/process_appointment_during", methods=['POST'])
 def process_appointment_during():
     """
