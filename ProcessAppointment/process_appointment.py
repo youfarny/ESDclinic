@@ -21,7 +21,7 @@ prescription_URL = f"http://{ip_address}:5104/prescription"
 payment_URL = f"http://{ip_address}:5105/payment"
 
 # BEFORE APPOINTMENT
-@app.route("/process_appointment_before", methods=['POST'])
+@app.route("/process_new", methods=['POST'])
 def process_appointment_before():
     if request.is_json:
         try:
@@ -29,32 +29,23 @@ def process_appointment_before():
             print("\nReceived an appointment request:", appointment_data)
 
             patient_id = appointment_data.get("patient_id")
+            request_doctor = appointment_data.get("request_doctor", "").strip()
             doctor_name = appointment_data.get("doctor_name", "")
-            previous_doctor = appointment_data.get("previous_doctor", False)
+            patient_contact = appointment_data.get("patient_contact")
             patient_symptoms = appointment_data.get("patient_symptoms")
 
             if not patient_id:
                 return jsonify({"code": 400, "message": "Missing required field: patient_id"}), 400
 
-          
-            # Fetch patient details
-            print("\nFetching patient details...")
-            patient_result = invoke_http(f"{patient_URL}/{patient_id}", method='GET')
-            print('Patient result:', patient_result)
-
-            if "error" in patient_result:
-                return jsonify({"code": 500, "message": "Failed to retrieve patient details", "data": patient_result}), 500
-
-            patient_contact = patient_result.get("patient_contact")
             if not patient_contact:
                 return jsonify({"code": 400, "message": "Missing patient contact information"}), 400
-
-            # Determine doctor selection logic
+            
             selected_doctor_id = None
 
+
             # If doctor_name is provided, get doctor_id
-            if doctor_name:
-                print(f"\nFetching doctor ID for {doctor_name}...")
+            if request_doctor:
+                print(f"\nFetching doctor ID for {request_doctor}...")
                 doctor_search_result = invoke_http(f"https://personal-73tajzpf.outsystemscloud.com/Doctor_service/rest/DoctorAPI/doctor/byname?doctor_name={doctor_name}", method='GET')
                 print('Doctor search result:', doctor_search_result)
 
@@ -70,7 +61,7 @@ def process_appointment_before():
                     return jsonify({"code": 400, "message": "Invalid doctor name provided"}), 400
 
             # If doctor_name is empty & previous_doctor is True → Get the last doctor from past appointments
-            elif previous_doctor:
+            elif request_doctor=="same":
                 print("\nFetching previous doctor from past appointments...")
                 previous_appointments = invoke_http(f"{appointment_URL}/records/{patient_id}", method='GET')
                 print("Previous appointments:", previous_appointments)
@@ -104,14 +95,14 @@ def process_appointment_before():
                     return jsonify({"code": 500, "message": "Failed to assign doctor"}), 500
                 
             # Create a new appointment
-            print("\nCreating a new appointment for the patient...")
+            # print("\nCreating a new appointment for the patient...")
             appointment_data = {
                 "patient_id": patient_id,
                 "doctor_id": selected_doctor_id,
                 "patient_symptoms": patient_symptoms
             }
             new_appointment_result = invoke_http(new_appointment_URL, method='POST', json=appointment_data)
-            print("New appointment result:", new_appointment_result)
+            # print("New appointment result:", new_appointment_result)
 
             if "error" in new_appointment_result or "appointment_id" not in new_appointment_result:
                 return jsonify({"code": 500, "message": "Failed to create a new appointment", "data": new_appointment_result}), 500
@@ -120,7 +111,7 @@ def process_appointment_before():
 
 
             # Fetch doctor details for selected doctor
-            doctor_result = invoke_http(f"https://personal-73tajzpf.outsystemscloud.com/Doctor_service/rest/DoctorAPI/doctor/byid?doctor_id={selected_doctor_id}", method='GET')
+            doctor_result = invoke_http(f"https://personal-73tajzpf.outsystemscloud.com/Doctor_service/rest/DoctorAPI/doctor/byid?doctor_id={selected_doctor_id}", method='GET')            
             print("Selected doctor result:", doctor_result)
 
             if "error" in doctor_result:
@@ -172,7 +163,8 @@ def process_appointment_start():
     - Deletes it from the queue.
     - Fetches appointment details.
     - Updates the appointment with start_time and notes.
-    - Returns the updated appointment to the doctor.
+    - Retrieves the patient's allergies from the patient database.
+    - Returns the updated appointment details along with the allergies.
     """
     try:
         data = request.get_json()
@@ -216,8 +208,27 @@ def process_appointment_start():
         if "error" in appointment_data:
             return jsonify({"code": 404, "message": "Appointment not found"}), 404
         
-        # Update appointment with start_time & notes
+        # Get patient_id and symptoms from appointment data
+        patient_id = appointment_data.get("patient_id")
         
+        patient_symptoms = appointment_data.get("patient_symptoms", "Unknown symptoms")
+        if not patient_id:
+            return jsonify({"code": 500, "message": "Failed to retrieve patient_id from appointment"}), 500
+
+        # Fetch patient allergies
+        print(f"Fetching allergies for patient_id: {patient_id}")
+        allergies_response = requests.get(f"{patient_URL}/patient/allergies/{patient_id}")
+        print(f"Allergy API Response Status: {allergies_response.status_code}")
+        print(f"Allergy API Response Content: {allergies_response.text}")
+
+        if allergies_response.status_code == 200 and allergies_response.text.strip():
+            allergies_data = allergies_response.json()
+            patient_allergies = allergies_data.get("allergies", ["No known allergies"])
+        else:
+            patient_allergies = []
+
+        # Update appointment with start_time & notes
+    
         update_payload = {
             "appointment_id": appointment_id, 
             "start_time": start_time,
@@ -255,17 +266,17 @@ def process_appointment_start():
         return jsonify({
             "code": 200,
             "message": "Appointment started successfully",
-            "data": appointment_data
+            "appointment_id": appointment_id,
+            "patient_id": patient_id,
+            "patient_allergies": patient_allergies,
+            "patient_symptoms": patient_symptoms
         }), 200
-
     except Exception as e:
         print("ERROR:", str(e))
         return jsonify({"code": 500, "message": "Internal server error", "error": str(e)}), 500
     
 
 
-
-    
 @app.route("/process_appointment_end", methods=['POST'])
 def process_appointment_end():
     """
