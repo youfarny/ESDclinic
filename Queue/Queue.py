@@ -110,7 +110,7 @@ def create_appointment():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/queue/next_start/<int:doctor_id>", methods=['GET'])
+@app.route("/queue/next/<int:doctor_id>", methods=['GET'])
 def get_next_start(doctor_id):
     """
     Get the next patient in the queue for a specific doctor (starting point)
@@ -143,43 +143,43 @@ def get_next_start(doctor_id):
     return jsonify({"doctor_id": next_patient.doctor_id, "appointment_id": next_patient.appointment_id}), 200
 
 
-@app.route("/queue/next_end/<int:doctor_id>", methods=['GET'])
-def get_next_end(doctor_id):
-    """
-    Get the next patient in the queue for a specific doctor (end point)
-    ---
-    tags:
-      - Queue
-    parameters:
-      - name: doctor_id
-        in: path
-        required: true
-        type: integer
-        description: The doctor's ID
-    responses:
-      200:
-        description: The next patient in the queue
-        schema:
-          type: object
-          properties:
-            doctor_id:
-              type: integer
-            appointment_id:
-              type: integer
-            patient_contact:
-              type: integer
-      404:
-        description: No patients in queue
-    """
-    next_patient = Queue.query.filter_by(doctor_id=doctor_id).order_by(Queue.appointment_id).first()
-    if not next_patient:
-        return jsonify({"error": "No patients in queue"}), 404
+# @app.route("/queue/next_end/<int:doctor_id>", methods=['GET'])
+# def get_next_end(doctor_id):
+#     """
+#     Get the next patient in the queue for a specific doctor (end point)
+#     ---
+#     tags:
+#       - Queue
+#     parameters:
+#       - name: doctor_id
+#         in: path
+#         required: true
+#         type: integer
+#         description: The doctor's ID
+#     responses:
+#       200:
+#         description: The next patient in the queue
+#         schema:
+#           type: object
+#           properties:
+#             doctor_id:
+#               type: integer
+#             appointment_id:
+#               type: integer
+#             patient_contact:
+#               type: integer
+#       404:
+#         description: No patients in queue
+#     """
+#     next_patient = Queue.query.filter_by(doctor_id=doctor_id).order_by(Queue.appointment_id).first()
+#     if not next_patient:
+#         return jsonify({"error": "No patients in queue"}), 404
 
-    return jsonify({
-        "doctor_id": next_patient.doctor_id,
-        "appointment_id": next_patient.appointment_id,
-        "patient_contact": next_patient.patient_contact
-    }), 200
+#     return jsonify({
+#         "doctor_id": next_patient.doctor_id,
+#         "appointment_id": next_patient.appointment_id,
+#         "patient_contact": next_patient.patient_contact
+#     }), 200
 
 
 @app.route("/queue/<int:doctor_id>/<int:appointment_id>", methods=['DELETE'])

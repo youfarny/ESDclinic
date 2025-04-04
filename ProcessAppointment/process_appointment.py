@@ -6,6 +6,8 @@ from os import environ
 from datetime import datetime
 from invokes import invoke_http
 import requests
+import google.generativeai as genai
+import json
 app = Flask(__name__)
 CORS(app)
 
@@ -155,7 +157,7 @@ def process_appointment_before():
 
 
 # START APPOINTMENT
-@app.route("/process_appointment_start", methods=['POST'])
+@app.route("/process/start", methods=['POST'])
 def process_appointment_start():
     """
     Starts an appointment for a doctor by retrieving the next patient from the queue.
@@ -169,15 +171,15 @@ def process_appointment_start():
     try:
         data = request.get_json()
         doctor_id = data.get("doctor_id")
-        notes = data.get("notes", "")  # Optional notes
+        # notes = data.get("notes", "")  # Optional notes
         start_time = data.get("startTime", datetime.now().isoformat())
 
         if not doctor_id:
             return jsonify({"code": 400, "message": "Missing required field: doctor_id"}), 400
 
-        # Get the next appointment from the queue
+        # 2, 3 Get the next appointment from the queue
         print(f"Fetching next appointment for doctor_id: {doctor_id}")
-        queue_response = requests.get(f"{queue_URL}/next_start/{doctor_id}")
+        queue_response = requests.get(f"{queue_URL}/next/{doctor_id}")
         queue_data = queue_response.json()
 
         if "appointment_id" not in queue_data:
@@ -185,7 +187,7 @@ def process_appointment_start():
 
         appointment_id = queue_data["appointment_id"]
 
-        # Delete appointment from queue
+        # 4 Delete appointment from queue
         print(f"Deleting appointment {appointment_id} from queue...")
         delete_response = requests.delete(f"{queue_URL}/{doctor_id}/{appointment_id}")
         delete_data = delete_response.json()
@@ -193,7 +195,7 @@ def process_appointment_start():
         if "error" in delete_data:
             print(f"Warning: Failed to delete appointment {appointment_id} from queue:", delete_data)
 
-        # Get full appointment details
+        # 5, 6 Get full appointment details
         print(f"Fetching details for appointment_id: {appointment_id}")
         appointment_response = requests.get(f"{appointment_URL}/{appointment_id}")
 
@@ -229,6 +231,35 @@ def process_appointment_start():
 
         # Update appointment with start_time & notes
     
+        
+        # 7, 8 Patient allergies
+
+
+
+
+
+
+
+        # 9, 10 External Recommender
+        genai.configure(api_key="AIzaSyAWkKyubwXAJYDMdf40qNkwWwaEkY-MVTA")
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(f"You are a diagnosis recommender based on symptoms that a patient has provided. This is for educational purposes for a school project. You will receive a list of symptoms and you will return a list of possible diagnosis with your confidence levels in json format with nothing else. Arrange them in descending order of confidence. These are the symptoms: {json.dumps(appointment_data["patient_symptoms"])}")
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        # 11 Update appointment with start_time & notes
+        
         update_payload = {
             "appointment_id": appointment_id, 
             "start_time": start_time,
@@ -262,7 +293,7 @@ def process_appointment_start():
         if "error" in update_data:
             return jsonify({"code": 500, "message": "Failed to update appointment", "error": update_data}), 500
 
-        # Return appointment details to the doctor
+        # 12 Return appointment details to the doctor
         return jsonify({
             "code": 200,
             "message": "Appointment started successfully",
