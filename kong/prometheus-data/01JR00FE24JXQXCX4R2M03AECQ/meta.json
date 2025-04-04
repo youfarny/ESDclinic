@@ -1,0 +1,17 @@
+{
+	"ulid": "01JR00FE24JXQXCX4R2M03AECQ",
+	"minTime": 1743746413549,
+	"maxTime": 1743753600000,
+	"stats": {
+		"numSamples": 30720,
+		"numSeries": 64,
+		"numChunks": 257
+	},
+	"compaction": {
+		"level": 1,
+		"sources": [
+			"01JR00FE24JXQXCX4R2M03AECQ"
+		]
+	},
+	"version": 1
+}

@@ -14,10 +14,10 @@ CREATE TABLE `patient`.`patient` (
   -- Insert fake patients
 INSERT INTO `patient`.`patient` (patient_name, patient_password, patient_contact, patient_address, patient_insurance, patient_allergies)
 VALUES 
-('John Doe', 'password123', 987654321, '123 Main St', 1, '["Penicillin"]'),
+('John Doe', 'password123', 987654321, '123 Main St', 1, '["Ibuprofen"]'),
 ('Jane Smith', 'securepass', 876543210, '456 Oak St', 0, '["None"]'),
-('Alice Johnson', 'alicepass', 765432109, '789 Pine St', 1, '["Peanuts"]'),
-('Bob Williams', 'bobpass', 654321098, '101 Maple St', 0, '["Sulfa drugs"]'),
+('Alice Johnson', 'alicepass', 765432109, '789 Pine St', 1, '["Antihistamines"]'),
+('Bob Williams', 'bobpass', 654321098, '101 Maple St', 0, '["Paracetamol"]'),
 ('Emily Brown', 'emilypass', 543210987, '202 Birch St', 1, '["None"]');
   
 DROP DATABASE IF EXISTS queue;  
@@ -40,11 +40,12 @@ VALUES
 
 DROP DATABASE IF EXISTS appointment;  
 CREATE DATABASE `appointment` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+
 CREATE TABLE `appointment`.`appointment` (
   `appointment_id` INT NOT NULL AUTO_INCREMENT,
   `patient_id` INT NOT NULL,
-  `patient_symptoms` LONGTEXT NOT NULL,
-  `notes` LONGTEXT NULL,
+  `patient_symptoms` JSON NOT NULL,
+  `notes` JSON NULL,
   `diagnosis` LONGTEXT NULL,
   `doctor_id` INT NULL,
   `prescription_id` INT NULL,
@@ -52,17 +53,18 @@ CREATE TABLE `appointment`.`appointment` (
   `start_time` DATETIME NULL,
   `end_time` DATETIME NULL,
   PRIMARY KEY (`appointment_id`),
-  UNIQUE INDEX `appointment_id_UNIQUE` (`appointment_id` ASC) VISIBLE);
-  
-  -- Insert fake appointments
+  UNIQUE INDEX `appointment_id_UNIQUE` (`appointment_id` ASC) VISIBLE
+);
+
 INSERT INTO `appointment`.`appointment` 
     (patient_id, patient_symptoms, notes, diagnosis, doctor_id, prescription_id, payment_id, start_time, end_time)
 VALUES 
-    (1, 'Fever, headache', 'Mild fever observed', 'Viral infection', 1, 1, 1, '2025-03-18 09:00:00', '2025-03-18 09:30:00'),
-    (2, 'Stomach pain', 'Abdominal tenderness', 'Food poisoning', 2, 2, 2, '2025-03-18 10:00:00', '2025-03-18 10:20:00'),
-    (3, 'Skin rash', 'Red patches on skin', 'Allergic reaction', 3, 3, 3, '2025-03-18 11:00:00', '2025-03-18 11:15:00'),
-    (4, 'Back pain', 'Lower back discomfort', 'Muscle strain', 1, 4, 4, '2025-03-18 13:00:00', '2025-03-18 13:45:00'),
-    (5, 'Cough and sore throat', 'Mild throat redness', 'Common cold', 2, 5, 5, '2025-03-18 14:00:00', '2025-03-18 14:30:00');
+    (1, '["Fever", "Headache"]', '[{"diagnosis": "Influenza (Flu)", "confidence": 90}, {"diagnosis": "Common Cold", "confidence": 85}]', 'Viral infection', 1, 1, 1, '2025-03-18 09:00:00', '2025-03-18 09:30:00'),
+    (2, '["Stomach pain"]', NULL, 'Food poisoning', 2, 2, 2, '2025-03-18 10:00:00', '2025-03-18 10:20:00'),
+    (3, '["Skin rash"]', NULL, 'Allergic reaction', 3, 3, 3, '2025-03-18 11:00:00', '2025-03-18 11:15:00'),
+    (4, '["Back pain"]', NULL, 'Muscle strain', 1, 4, 4, '2025-03-18 13:00:00', '2025-03-18 13:45:00'),
+    (5, '["Cough", "Sore throat"]', NULL, 'Common cold', 2, 5, 5, '2025-03-18 14:00:00', '2025-03-18 14:30:00');
+
     
     
 DROP DATABASE IF EXISTS doctor;  
@@ -84,19 +86,40 @@ DROP DATABASE IF EXISTS prescription;
 CREATE DATABASE `prescription` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 CREATE TABLE `prescription`.`prescription` (
   `prescription_id` INT NOT NULL AUTO_INCREMENT,
-  `medicine` VARCHAR(100) NOT NULL,
+  `medicine` JSON NOT NULL,
   `appointment_id` INT NOT NULL,
   PRIMARY KEY (`prescription_id`),
-  UNIQUE INDEX `prescription_id_UNIQUE` (`prescription_id` ASC) VISIBLE);
-  
-  -- Insert fake prescriptions
-INSERT INTO `prescription`.`prescription` (prescription_id, medicine, appointment_id)
-VALUES 
-(1, 'Paracetamol, Ibuprofen', '1'),
-(2, 'Antacids, Oral rehydration salts', '2'),
-(3, 'Antihistamines, Cortisone cream', '3'),
-(4, 'Painkillers, Physiotherapy', '4'),
-(5, 'Cough syrup, Lozenges', '5');
+  UNIQUE INDEX `prescription_id_UNIQUE` (`prescription_id` ASC) VISIBLE
+);
+
+-- Insert fake prescriptions with proper JSON
+INSERT INTO `prescription`.`prescription` (medicine, appointment_id) VALUES
+('["Paracetamol", "Ibuprofen"]', 1),
+('["Antacids", "Oral rehydration salts"]', 2),
+('["Antihistamines", "Cortisone cream"]', 3),
+('["Painkillers", "Physiotherapy"]', 4),
+('["Cough syrup", "Lozenges"]', 5);
+
+CREATE TABLE `prescription`.`medicine` (
+  `indiv_medicine` VARCHAR(100) NOT NULL,
+  `cost` DECIMAL(5,2) NOT NULL,
+  PRIMARY KEY (`indiv_medicine`),
+  UNIQUE INDEX `indiv_medicine_UNIQUE` (`indiv_medicine` ASC) VISIBLE
+);
+
+-- Insert medication with prices (Correct format)
+INSERT INTO `prescription`.`medicine` (indiv_medicine, cost) VALUES
+('Paracetamol', 5.00),
+('Ibuprofen', 6.50),
+('Antacids', 4.00),
+('Oral rehydration salts', 3.00),
+('Antihistamines', 7.00),
+('Cortisone cream', 8.50),
+('Painkillers', 6.00),
+('Physiotherapy', 50.00),
+('Cough syrup', 5.50),
+('Lozenges', 3.50);
+
 
 DROP DATABASE IF EXISTS payment;
 CREATE DATABASE `payment` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
@@ -104,18 +127,20 @@ CREATE TABLE `payment`.`payment` (
   `payment_id` int NOT NULL AUTO_INCREMENT,
   `appointment_id` int NOT NULL,
   `payment_status` tinyint NOT NULL,
+  `insurance` tinyint NOT NULL,
   `payment_amount` float NOT NULL,
   PRIMARY KEY (`payment_id`),
   UNIQUE INDEX `payment_id_UNIQUE` (`payment_id` ASC) VISIBLE);
 
 -- Insert fake payments
-INSERT INTO `payment`.`payment` (payment_id, appointment_id, payment_status, payment_amount)
+INSERT INTO `payment`.`payment` (appointment_id, payment_status, insurance, payment_amount)
 VALUES 
-(1, 1, 1, '100.00'),
-(2, 2, 1, '150.00'),
-(3, 3, 0, '200.00'),
-(4, 4, 1, '120.00'),
-(5, 5, 1, '80.00');
+(1, 1, 0, 100.00),
+(2, 1, 1, 150.00),
+(3, 0, 0, 200.00),
+(4, 0, 1, 120.00),
+(5, 1, 0, 80.00);
+
 
 
 
