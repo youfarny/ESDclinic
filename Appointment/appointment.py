@@ -21,7 +21,7 @@ class Appointment(db.Model):
     patient_id = db.Column(db.Integer, nullable=False)
     doctor_id = db.Column(db.Integer, nullable=False)
     patient_symptoms = db.Column(db.JSON, nullable=False)
-    notes = db.Column(db.String(500))
+    notes = db.Column(db.JSON)
     start_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
     diagnosis = db.Column(db.String(500))
@@ -171,7 +171,7 @@ def start_appointment():
             appointment_id:
               type: integer
             notes:
-              type: string
+              type: JSON
             startTime:
               type: string
               format: date-time

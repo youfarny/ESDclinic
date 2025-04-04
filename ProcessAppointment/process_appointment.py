@@ -6,18 +6,20 @@ from os import environ
 from datetime import datetime
 from invokes import invoke_http
 import requests
-import google.generativeai as genai
+from google import genai
 import json
 app = Flask(__name__)
 CORS(app)
 
 # Define service URLs
-# ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
+
 
 ip_address = 'localhost'
+ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
+
 appointment_URL = f"http://{ip_address}:5100/appointment"
 new_appointment_URL = f"http://{ip_address}:5100/appointment/new"
-patient_URL = f"http://{ip_address}:5102/patient/contact"
+patient_URL = f"http://{ip_address}:5102/patient"
 queue_URL = f"http://{ip_address}:5103/queue"
 prescription_URL = f"http://{ip_address}:5104/prescription"
 payment_URL = f"http://{ip_address}:5105/payment"
@@ -168,16 +170,23 @@ def process_appointment_start():
     - Retrieves the patient's allergies from the patient database.
     - Returns the updated appointment details along with the allergies.
     """
+
+    # 1 Get next appointment using doctor_id
     try:
         data = request.get_json()
         doctor_id = data.get("doctor_id")
-        # notes = data.get("notes", "")  # Optional notes
-        start_time = data.get("startTime", datetime.now().isoformat())
 
         if not doctor_id:
             return jsonify({"code": 400, "message": "Missing required field: doctor_id"}), 400
+        
 
-        # 2, 3 Get the next appointment from the queue
+
+
+
+        # 2 Get the next appointment from the queue {doctor_id}
+        # 3 Return next appointment {doctor_id, appointment_id}
+        print("\n\n")
+        print("------------------------------STEP 2 & 3------------------------------")
         print(f"Fetching next appointment for doctor_id: {doctor_id}")
         queue_response = requests.get(f"{queue_URL}/next/{doctor_id}")
         queue_data = queue_response.json()
@@ -187,7 +196,14 @@ def process_appointment_start():
 
         appointment_id = queue_data["appointment_id"]
 
-        # 4 Delete appointment from queue
+
+
+
+
+
+        # 4 Delete appointment from queue {appointment_id}
+        print("\n\n")
+        print("------------------------------STEP 4------------------------------")
         print(f"Deleting appointment {appointment_id} from queue...")
         delete_response = requests.delete(f"{queue_URL}/{doctor_id}/{appointment_id}")
         delete_data = delete_response.json()
@@ -195,7 +211,16 @@ def process_appointment_start():
         if "error" in delete_data:
             print(f"Warning: Failed to delete appointment {appointment_id} from queue:", delete_data)
 
-        # 5, 6 Get full appointment details
+
+
+
+
+
+
+        # 5 Get full appointment details {appointment_id}
+        # 6 Return appointment details {...}
+        print("\n\n")
+        print("------------------------------STEP 5 & 6------------------------------")
         print(f"Fetching details for appointment_id: {appointment_id}")
         appointment_response = requests.get(f"{appointment_URL}/{appointment_id}")
 
@@ -210,16 +235,22 @@ def process_appointment_start():
         if "error" in appointment_data:
             return jsonify({"code": 404, "message": "Appointment not found"}), 404
         
+        
         # Get patient_id and symptoms from appointment data
         patient_id = appointment_data.get("patient_id")
-        
-        patient_symptoms = appointment_data.get("patient_symptoms", "Unknown symptoms")
-        if not patient_id:
-            return jsonify({"code": 500, "message": "Failed to retrieve patient_id from appointment"}), 500
 
-        # Fetch patient allergies
+
+        
+
+
+
+        # 7 Patient allergies {patient_id}
+        # 8 Return patient allergies {patient_id, patient_allergies}
+        print("\n\n")
+        print("------------------------------STEP 7 & 8------------------------------")
         print(f"Fetching allergies for patient_id: {patient_id}")
-        allergies_response = requests.get(f"{patient_URL}/patient/allergies/{patient_id}")
+        print(f"{patient_URL}/patient/allergies/{patient_id}")
+        allergies_response = requests.get(f"{patient_URL}/allergies/{patient_id}")
         print(f"Allergy API Response Status: {allergies_response.status_code}")
         print(f"Allergy API Response Content: {allergies_response.text}")
 
@@ -229,48 +260,58 @@ def process_appointment_start():
         else:
             patient_allergies = []
 
-        # Update appointment with start_time & notes
-    
+
+
+
+
+
+        # 9 Send symptoms to AI {patient_symptoms}
+        # 10 Return recommendations {diagnoses}
+        print("\n\n")
+        print("------------------------------STEP 9 & 10------------------------------")
+        patient_symptoms = appointment_data.get("patient_symptoms", "Unknown symptoms")
+
+        if not patient_id:
+            return jsonify({"code": 500, "message": "Failed to retrieve patient_id from appointment"}), 500
+
+        client = genai.Client(api_key="AIzaSyAWkKyubwXAJYDMdf40qNkwWwaEkY-MVTA")
+
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=f"You are a diagnosis recommender for a project. You will receive a list of symptoms and return 5 possible diagnoses with your confidence level from 0 to 100% in descending order. Return your results in json format and nothing else. There are the symptoms: {patient_symptoms} "
+        )
+
+        # print(response.text)
+        clean_output = response.text.replace('```json', '').replace('```', '').strip()
+
+        recommended_diagnoses = json.loads(clean_output)
+
+        print(recommended_diagnoses)     
+
+
+
+
+
+
+
+        # Zoom?
+
+
+
+
+
+
+
+
+        # 11 Update appointment {appointment_id, notes}
+        print("\n\n")
+        print("------------------------------STEP 11------------------------------")
+        start_time = data.get("startTime", datetime.now().isoformat())
         
-        # 7, 8 Patient allergies
-
-
-
-
-
-
-
-        # 9, 10 External Recommender
-        genai.configure(api_key="AIzaSyAWkKyubwXAJYDMdf40qNkwWwaEkY-MVTA")
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(f"You are a diagnosis recommender based on symptoms that a patient has provided. This is for educational purposes for a school project. You will receive a list of symptoms and you will return a list of possible diagnosis with your confidence levels in json format with nothing else. Arrange them in descending order of confidence. These are the symptoms: {json.dumps(appointment_data["patient_symptoms"])}")
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-        # 11 Update appointment with start_time & notes
-        
-        update_payload = {
-            "appointment_id": appointment_id, 
-            "start_time": start_time,
-            "notes": notes
-        }
-
-        print(f"Updating appointment {appointment_id} with start_time and notes...")
         update_payload = {
             "appointment_id": appointment_id, 
             "startTime": start_time,  # Ensure field name matches backend
-            "notes": notes
+            "notes": recommended_diagnoses
         }
 
         print(f"Sending PATCH request to {appointment_URL}/appointment_start with payload:")
@@ -292,6 +333,13 @@ def process_appointment_start():
 
         if "error" in update_data:
             return jsonify({"code": 500, "message": "Failed to update appointment", "error": update_data}), 500
+        
+
+
+
+
+
+
 
         # 12 Return appointment details to the doctor
         return jsonify({
@@ -300,7 +348,8 @@ def process_appointment_start():
             "appointment_id": appointment_id,
             "patient_id": patient_id,
             "patient_allergies": patient_allergies,
-            "patient_symptoms": patient_symptoms
+            "patient_symptoms": patient_symptoms,
+            "notes": recommended_diagnoses
         }), 200
     except Exception as e:
         print("ERROR:", str(e))
