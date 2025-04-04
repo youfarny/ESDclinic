@@ -32,7 +32,7 @@ def process_appointment_before():
 
             patient_id = appointment_data.get("patient_id")
             request_doctor = appointment_data.get("request_doctor", "").strip()
-            doctor_name = appointment_data.get("doctor_name", "")
+            
             patient_contact = appointment_data.get("patient_contact")
             patient_symptoms = appointment_data.get("patient_symptoms")
 
@@ -46,9 +46,9 @@ def process_appointment_before():
 
 
             # If doctor_name is provided, get doctor_id
-            if request_doctor:
+            if request_doctor!='same' and request_doctor!='':
                 print(f"\nFetching doctor ID for {request_doctor}...")
-                doctor_search_result = invoke_http(f"https://personal-73tajzpf.outsystemscloud.com/Doctor_service/rest/DoctorAPI/doctor/byname?doctor_name={doctor_name}", method='GET')
+                doctor_search_result = invoke_http(f"https://personal-73tajzpf.outsystemscloud.com/Doctor_service/rest/DoctorAPI/doctor/byname?doctor_name={request_doctor}", method='GET')
                 print('Doctor search result:', doctor_search_result)
 
                 if (
@@ -58,11 +58,11 @@ def process_appointment_before():
                     len(doctor_search_result["Doctor"]) > 0
                 ):
                     selected_doctor_id = doctor_search_result["Doctor"][0]["doctor_id"]
-                    print(f"Doctor ID for {doctor_name}: {selected_doctor_id}")
+                    print(f"Doctor ID for {request_doctor}: {selected_doctor_id}")
                 else:
                     return jsonify({"code": 400, "message": "Invalid doctor name provided"}), 400
 
-            # If doctor_name is empty & previous_doctor is True → Get the last doctor from past appointments
+            # If request_doctor = same → Get the last doctor from past appointments
             elif request_doctor=="same":
                 print("\nFetching previous doctor from past appointments...")
                 previous_appointments = invoke_http(f"{appointment_URL}/records/{patient_id}", method='GET')
@@ -85,7 +85,7 @@ def process_appointment_before():
                     print("No previous doctor found, fallback to shortest queue.")
 
             # If no doctor is assigned yet, assign based on shortest queue
-            if not selected_doctor_id:
+            if request_doctor=='':
                 print("\nAssigning doctor from shortest queue...")
                 queue_result = invoke_http(f"{queue_URL}/shortest", method='GET')
                 print("Queue result:", queue_result)
@@ -114,7 +114,7 @@ def process_appointment_before():
 
             # Fetch doctor details for selected doctor
             doctor_result = invoke_http(f"https://personal-73tajzpf.outsystemscloud.com/Doctor_service/rest/DoctorAPI/doctor/byid?doctor_id={selected_doctor_id}", method='GET')            
-            print("Selected doctor result:", doctor_result)
+            # print("Selected doctor result:", doctor_result)
 
             if "error" in doctor_result:
                 return jsonify({"code": 500, "message": "Failed to retrieve doctor details", "data": doctor_result}), 500
