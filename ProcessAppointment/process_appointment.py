@@ -169,11 +169,19 @@ def process_appointment_start():
     - Updates the appointment with start_time and notes.
     - Retrieves the patient's allergies from the patient database.
     - Returns the updated appointment details along with the allergies.
+    - {doctor_id: 1}
     """
+    print("\n\n")
+    print("!!!------------------------------NEW REQUEST TO /process/start------------------------------!!!")
 
-    # 1 Get next appointment using doctor_id
+
+
+    # 1 Get next appointment  {doctor_id}
+    print("\n\n")
+    print("------------------------------STEP 1------------------------------")
     try:
         data = request.get_json()
+        print(data)
         doctor_id = data.get("doctor_id")
 
         if not doctor_id:
@@ -342,6 +350,8 @@ def process_appointment_start():
 
 
         # 12 Return appointment details to the doctor
+        print("\n\n")
+        print("------------------------------STEP 12------------------------------")
         return jsonify({
             "code": 200,
             "message": "Appointment started successfully",
@@ -357,33 +367,98 @@ def process_appointment_start():
     
 
 
-@app.route("/process_appointment_end", methods=['POST'])
+@app.route("/process/end", methods=['POST'])
 def process_appointment_end():
     """
     Ends an appointment by updating the appointment details with end time, diagnosis, and medicine.
     - Creates a prescription if medicine is provided.
     - Updates the appointment record with end time, diagnosis, and prescription ID.
+    - {
+        appointment_id: 1,
+        patient_id: 1,
+        diagnosis: "Flu",
+        medicine: ["Antibiotics", "Antihistamines"]
+      }
     """
+
+    print("\n\n")
+    print("!!!------------------------------NEW REQUEST TO /process/end------------------------------!!!")
+
+
+    # 13 Send appointment info at end of appointment
+    print("\n\n")
+    print("------------------------------STEP 13------------------------------")
     try:
         data = request.get_json()
         appointment_id = data.get("appointment_id")
+        patient_id = data.get("patient_id")
         diagnosis = data.get("diagnosis", "")
         medicine = data.get("medicine", "")
         end_time = data.get("end_time", datetime.now().isoformat())
 
         if not appointment_id:
             return jsonify({"code": 400, "message": "Missing required field: appointment_id"}), 400
+        
+        print(data)
 
-        # 1. Fetch Appointment Details
-        print(f"Fetching details for appointment_id: {appointment_id}")
-        appointment_response = requests.get(f"{appointment_URL}/{appointment_id}")
-        if appointment_response.status_code != 200:
-            return jsonify({"code": 404, "message": "Appointment not found"}), 404
 
-        appointment_data = appointment_response.json()
-        patient_id = appointment_data.get("patient_id")
 
-        # 2. Create Prescription if Provided
+
+        # 14 Send Notification to next patient in queue
+        # {doctor_id} 
+        print("\n\n")
+        print("------------------------------STEP 14------------------------------")
+
+
+
+
+
+
+
+
+
+
+
+
+        # 18 Get patient allergies {patient_id}
+        # 19 Return patient allergies {patient_id, allergies} 
+        # Verification for allergies
+        print("\n\n")
+        print("------------------------------STEP 18 & 19------------------------------")
+
+        print(f"Fetching allergies for patient_id: {patient_id}")
+        print(f"{patient_URL}/patient/allergies/{patient_id}")
+        allergies_response = requests.get(f"{patient_URL}/allergies/{patient_id}")
+        print(f"Allergy API Response Status: {allergies_response.status_code}")
+        print(f"Allergy API Response Content: {allergies_response.text}")
+
+        if allergies_response.status_code == 200 and allergies_response.text.strip():
+            allergies_data = allergies_response.json()
+            patient_allergies = allergies_data.get("allergies", ["No known allergies"])
+        else:
+            patient_allergies = []
+
+        for allergy in patient_allergies:
+            for medicine_i in medicine:
+                if (allergy == medicine_i):
+                    print("Patient is allergic to medication")
+                    raise Exception("Patient is allergic to medication")
+
+
+
+
+
+
+
+
+
+
+
+        # 20 Create new prescription {medicine}
+        # 21 Return prescription_id {prescription_id} 
+        print("\n\n")
+        print("------------------------------STEP 20 & 21------------------------------")
+
         prescription_id = None
         if medicine:
             try:
@@ -408,27 +483,59 @@ def process_appointment_end():
                     print(f"Response content: {prescription_response.text}")
             except Exception as e:
                 print(f"Exception during prescription creation: {str(e)}")
-                # Continue with the appointment update even if prescription creation fails
+                raise Exception(f"Exception during prescription creation: {str(e)}")
 
-        # 3. Update Appointment with End Time, Diagnosis and Prescription ID
+
+
+
+
+
+
+
+
+
+        # 22 Update diagnosis / prescription in appointment {appointment_id, end_time, diagnosis, prescription_id}
+        # 23 Return success / failure {appointment_id, success} 
+        print("\n\n")
+        print("------------------------------STEP 22 & 23------------------------------")
+
         update_payload = {
             "appointment_id": appointment_id,
             "end_time": end_time,
             "diagnosis": diagnosis,
             "prescription_id": prescription_id
         }
+        try:    
+            print(f"Updating appointment {appointment_id} with payload: {update_payload}")
+            # Using the original endpoint that was in your code
+            update_response = requests.patch(f"{appointment_URL}/appointment_end", json=update_payload)
             
-        print(f"Updating appointment {appointment_id} with payload: {update_payload}")
-        # Using the original endpoint that was in your code
-        update_response = requests.patch(f"{appointment_URL}/appointment_end", json=update_payload)
-        
-        if update_response.status_code != 200:
-            print(f"Failed to update appointment. Status: {update_response.status_code}")
-            print(f"Response content: {update_response.text}")
-            return jsonify({"code": 500, "message": f"Failed to update appointment: {update_response.text}"}), 500
+            if update_response.status_code != 200:
+                print(f"Failed to update appointment. Status: {update_response.status_code}")
+                print(f"Response content: {update_response.text}")
+                return jsonify({"code": 500, "message": f"Failed to update appointment: {update_response.text}"}), 500
 
-        print(f"Appointment update response: {update_response.text}")
-        
+            print(f"Appointment update response: {update_response.text}")
+        except Exception as e:
+            print(f"Exception during appointment patch: {str(e)}")
+            raise Exception(f"Exception during appointment patch: {str(e)}")
+    
+
+
+
+
+
+
+
+
+
+
+
+
+        # 24 Return success / failure {appointment_id, prescription_id, success} 
+        print("\n\n")
+        print("------------------------------STEP 24------------------------------")
+
         return jsonify({
             "code": 200,
             "message": "Appointment ended successfully",
@@ -439,6 +546,28 @@ def process_appointment_end():
                 "prescription_id": prescription_id
             }
         }), 200
+
+
+
+
+
+
+
+        # 1. Fetch Appointment Details
+        # print("\n\n")
+        # print("------------------------------STEP 13------------------------------")        
+        # print(f"Fetching details for appointment_id: {appointment_id}")
+        # appointment_response = requests.get(f"{appointment_URL}/{appointment_id}")
+        # if appointment_response.status_code != 200:
+        #     return jsonify({"code": 404, "message": "Appointment not found"}), 404
+
+        # appointment_data = appointment_response.json()
+        # patient_id = appointment_data.get("patient_id")
+
+        # 2. Create Prescription if Provided
+
+        # 3. Update Appointment with End Time, Diagnosis and Prescription ID
+        
 
     except Exception as e:
         print("ERROR:", str(e))
