@@ -3,7 +3,7 @@ from flask_cors import CORS
 import os
 import sys
 from os import environ
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from invokes import invoke_http
 import requests
 from google import genai
@@ -177,7 +177,9 @@ def process_appointment_start():
     """
     print("\n\n")
     print("!!!------------------------------NEW REQUEST TO /process/start------------------------------!!!")
-
+    gmt_plus_8 = timezone(timedelta(hours=8))
+    start_time = data.get("startTime", datetime.now(gmt_plus_8).isoformat())
+    print(start_time)
 
 
     # 1 Get next appointment  {doctor_id}
@@ -318,7 +320,6 @@ def process_appointment_start():
         # 11 Update appointment {appointment_id, notes}
         print("\n\n")
         print("------------------------------STEP 11------------------------------")
-        start_time = data.get("startTime", datetime.now().isoformat())
         
         update_payload = {
             "appointment_id": appointment_id, 
@@ -387,7 +388,9 @@ def process_appointment_end():
 
     print("\n\n")
     print("!!!------------------------------NEW REQUEST TO /process/end------------------------------!!!")
-
+    gmt_plus_8 = timezone(timedelta(hours=8))
+    end_time = data.get("startTime", datetime.now(gmt_plus_8).isoformat())
+    print(end_time)
 
     # 13 Send appointment info at end of appointment
     print("\n\n")
@@ -398,7 +401,6 @@ def process_appointment_end():
         patient_id = data.get("patient_id")
         diagnosis = data.get("diagnosis", "")
         medicine = data.get("medicine", "")
-        end_time = data.get("end_time", datetime.now().isoformat())
 
         if not appointment_id:
             return jsonify({"code": 400, "message": "Missing required field: appointment_id"}), 400
