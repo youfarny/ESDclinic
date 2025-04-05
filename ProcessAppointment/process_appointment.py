@@ -18,15 +18,16 @@ ip_address = 'localhost'
 ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
 
 appointment_URL = f"http://{ip_address}:5100/appointment"
-new_appointment_URL = f"http://{ip_address}:5100/appointment/new"
 patient_URL = f"http://{ip_address}:5102/patient"
 queue_URL = f"http://{ip_address}:5103/queue"
 prescription_URL = f"http://{ip_address}:5104/prescription"
 payment_URL = f"http://{ip_address}:5105/payment"
 
 # BEFORE APPOINTMENT
-@app.route("/process_new", methods=['POST'])
+@app.route("/process/new", methods=['POST'])
 def process_appointment_before():
+
+    # 3 Get recommended doctor using patient_id, request_doctor, patient_symptoms, patient_contact
     if request.is_json:
         try:
             appointment_data = request.get_json()
@@ -34,7 +35,6 @@ def process_appointment_before():
 
             patient_id = appointment_data.get("patient_id")
             request_doctor = appointment_data.get("request_doctor", "").strip()
-            
             patient_contact = appointment_data.get("patient_contact")
             patient_symptoms = appointment_data.get("patient_symptoms")
 
@@ -44,14 +44,64 @@ def process_appointment_before():
             if not patient_contact:
                 return jsonify({"code": 400, "message": "Missing patient contact information"}), 400
             
-            selected_doctor_id = None
+
+            if request_doctor=='' or request_doctor=='same':
+
+                # A1 If no doctor is requested, get shortest queue doctor
+                # A2 Return doctor
+                if request_doctor=='':
+                    print("------------------------------STEP A1 & A2------------------------------")
+                    print("\nAssigning doctor from shortest queue...")
+                    queue_result = invoke_http(f"{queue_URL}/shortest", method='GET')
+                    
+
+                    if "error" not in queue_result and queue_result.get("doctor_id"):
+                        selected_doctor_id = queue_result["doctor_id"]
+                        print(f"Assigned doctor_id with shortest queue: {selected_doctor_id}")
+                    else:
+                        return jsonify({"code": 500, "message": "Failed to assign doctor"}), 500
+                    
+                # B1 Get patient records
+                # B2 Return patient's records → Get the previous doctor 
+                elif request_doctor=="same":
+                    print("------------------------------STEP B1 & B2------------------------------")
+                    print("\nFetching previous doctor from past appointments...")
+                    previous_appointments = invoke_http(f"{appointment_URL}/records/{patient_id}", method='GET')
+                    print("Previous appointments:", previous_appointments)
+
+                    if isinstance(previous_appointments, list) and len(previous_appointments) > 0:
+
+                        # Sort appointments by start_time (assuming ISO format: YYYY-MM-DDTHH:MM:SS)
+                        sorted_appointments = sorted(previous_appointments, key=lambda x: x.get("start_time") or "", reverse=True)
+                        # Most recent appointment
+                        last_appointment = sorted_appointments[0]  
+                        # Extract doctor_id safely
+                        selected_doctor_id = last_appointment.get("doctor_id")
+
+                        if selected_doctor_id:
+                            print(f"Assigned previous doctor: {selected_doctor_id}")
+                        else:
+                            print("Previous doctor found, but doctor_id is missing.")
+                    else:
+                        print("No previous doctor found, fallback to shortest queue.")
 
 
-            # If doctor_name is provided, get doctor_id
-            if request_doctor!='same' and request_doctor!='':
+                # A3 B3 Request doctor_name using doctor_id
+                # A4 B4 Return doctor_name
+                doctor_info = invoke_http(f"https://personal-73tajzpf.outsystemscloud.com/Doctor_service/rest/DoctorAPI/doctor/byid?doctor_id={selected_doctor_id}", method='GET')
+                doctor_name = doctor_info["Doctor"][0]["doctor_name"]
+                print(f"Assigned Doctor Name: {doctor_name}")
+
+
+            
+            else:
+                # C1 Get doctor_id if doctor is requested
+                # C2 Return doctor_id
+                print("------------------------------STEP C1 & C2------------------------------")
+                doctor_name = request_doctor
                 print(f"\nFetching doctor ID for {request_doctor}...")
                 doctor_search_result = invoke_http(f"https://personal-73tajzpf.outsystemscloud.com/Doctor_service/rest/DoctorAPI/doctor/byname?doctor_name={request_doctor}", method='GET')
-                print('Doctor search result:', doctor_search_result)
+                print(f"Assigned Doctor Name: {doctor_name}")
 
                 if (
                     "Result" in doctor_search_result and 
@@ -64,96 +114,50 @@ def process_appointment_before():
                 else:
                     return jsonify({"code": 400, "message": "Invalid doctor name provided"}), 400
 
-            # If request_doctor = same → Get the last doctor from past appointments
-            elif request_doctor=="same":
-                print("\nFetching previous doctor from past appointments...")
-                previous_appointments = invoke_http(f"{appointment_URL}/records/{patient_id}", method='GET')
-                print("Previous appointments:", previous_appointments)
-
-                if isinstance(previous_appointments, list) and len(previous_appointments) > 0:
-                    # Sort appointments by start_time (assuming ISO format: YYYY-MM-DDTHH:MM:SS)
-                    sorted_appointments = sorted(previous_appointments, key=lambda x: x.get("start_time") or "", reverse=True)
-
-                    last_appointment = sorted_appointments[0]  # Most recent appointment
-
-                    # Extract doctor_id safely
-                    selected_doctor_id = last_appointment.get("doctor_id")
-
-                    if selected_doctor_id:
-                        print(f"Assigned previous doctor: {selected_doctor_id}")
-                    else:
-                        print("Previous doctor found, but doctor_id is missing.")
-                else:
-                    print("No previous doctor found, fallback to shortest queue.")
-
-            # If no doctor is assigned yet, assign based on shortest queue
-            if request_doctor=='':
-                print("\nAssigning doctor from shortest queue...")
-                queue_result = invoke_http(f"{queue_URL}/shortest", method='GET')
-                print("Queue result:", queue_result)
-
-                if "error" not in queue_result and queue_result.get("doctor_id"):
-                    selected_doctor_id = queue_result["doctor_id"]
-                    print(f"Assigned doctor with shortest queue: {selected_doctor_id}")
-                else:
-                    return jsonify({"code": 500, "message": "Failed to assign doctor"}), 500
-                
-            # Create a new appointment
-            # print("\nCreating a new appointment for the patient...")
+        
+            # 5 Create a new appointment {patient_id, doctor_id, symptoms}
+            # 6 Return new appointment {appointment_id}
+           
             appointment_data = {
                 "patient_id": patient_id,
                 "doctor_id": selected_doctor_id,
                 "patient_symptoms": patient_symptoms
             }
-            new_appointment_result = invoke_http(new_appointment_URL, method='POST', json=appointment_data)
-            # print("New appointment result:", new_appointment_result)
+           
+            print("------------------------------STEP 5 & 6------------------------------")
+            print(f"Creating new appointment")
+            new_appointment_result = invoke_http(f"{appointment_URL}/new", method='POST', json=appointment_data)
 
             if "error" in new_appointment_result or "appointment_id" not in new_appointment_result:
                 return jsonify({"code": 500, "message": "Failed to create a new appointment", "data": new_appointment_result}), 500
 
-            appointment_id = new_appointment_result["appointment_id"]
+            new_appointment_id = new_appointment_result["appointment_id"]
+            print("New apppointment ID: ", new_appointment_id)
 
 
-            # Fetch doctor details for selected doctor
-            doctor_result = invoke_http(f"https://personal-73tajzpf.outsystemscloud.com/Doctor_service/rest/DoctorAPI/doctor/byid?doctor_id={selected_doctor_id}", method='GET')            
-            # print("Selected doctor result:", doctor_result)
 
-            if "error" in doctor_result:
-                return jsonify({"code": 500, "message": "Failed to retrieve doctor details", "data": doctor_result}), 500
 
-            # Add appointment to queue
-            print("\nAdding appointment to queue...")
-            queue_data = {
-                "doctor_id": selected_doctor_id,
-                "appointment_id": appointment_id,
-                "patient_contact": patient_contact
-            }
-            queue_result = invoke_http(queue_URL, method='POST', json=queue_data)
-            print('Queue result:', queue_result)
 
-            if "error" in queue_result:
-                return jsonify({"code": 500, "message": "Failed to add appointment to queue", "data": queue_result}), 500
+            # Get queue length from send notification
 
+
+
+
+            # 11 Return new appointment {appointment_id, doctor_name, doctor_id, queue_length}
             return jsonify({
                 "code": 200,
                 "message": "Appointment successfully added to queue",
                 "data": {
-                    "appointment_result": new_appointment_result,
-                    "doctor_result": doctor_result,
-                    "queue_result": queue_result
+                    "appointment_id": new_appointment_id,
+                    "doctor_name": doctor_name,
+                    "doctor_id": selected_doctor_id,
+                    # "queue_length": queue_length
                 }
             }), 200
 
         except Exception as e:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            ex_str = f"{str(e)} at {str(exc_type)}: {fname}: line {str(exc_tb.tb_lineno)}"
-            print("ERROR:", ex_str)
-
-            return jsonify({
-                "code": 500,
-                "message": "Internal server error: " + ex_str
-            }), 500
+            print("ERROR:", str(e))
+            return jsonify({"code": 500, "message": "Internal server error", "error": str(e)}), 500
 
     return jsonify({"code": 400, "message": "Invalid JSON input"}), 400
 
@@ -574,8 +578,8 @@ def process_appointment_end():
         return jsonify({"code": 500, "message": "Internal server error", "error": str(e)}), 500
 
 # AFTER APPOINTMENT
-@app.route("/process_appointment_after", methods=['POST'])
-def process_appointment_after():
+@app.route("/process_calculate", methods=['POST'])
+def process_appointment_calculate():
     """
     Handles the post-appointment workflow including prescription retrieval,
     payment processing, and notifications
