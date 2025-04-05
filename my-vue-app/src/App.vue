@@ -58,7 +58,7 @@ const isActive = (path) => {
         </router-link>
       </div>
       
-      <!-- Pharmacist Navigation -->
+      <!-- Pharmacist Navigation
       <div v-else-if="userRole === 'pharmacist'" class="nav-links">
         <router-link to="/pharmacist" class="nav-link" :class="{ active: isActive('/pharmacist') && route.path === '/pharmacist' }">
           Dashboard
@@ -72,7 +72,7 @@ const isActive = (path) => {
         <router-link to="/pharmacist/about" class="nav-link" :class="{ active: isActive('/pharmacist/about') }">
           About
         </router-link>
-      </div>
+      </div> -->
       
       <button @click="logout" class="logout-btn">Logout</button>
     </nav>
