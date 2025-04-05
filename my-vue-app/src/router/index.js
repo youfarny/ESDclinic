@@ -1,15 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue'
-import PatientDashboard from '../views/patient/Dashboard.vue'
-import DoctorDashboard from '../views/doctor/Dashboard.vue'
-import PharmacistDashboard from '../views/pharmacist/PharmacistDashboard.vue'
+import PatientDashboard from '../views/patient/PatientDashboard.vue'
 import BookAppointment from '../views/patient/BookAppointment.vue'
-import DoctorConsultation from '../views/doctor/Consultation.vue'
-import PharmacistInventory from '../views/pharmacist/Inventory.vue'
-import PharmacistAbout from '../views/pharmacist/About.vue'
-import ProcessPrescription from '../views/pharmacist/ProcessPrescription.vue'
 import MyAppointments from '../views/patient/MyAppointments.vue'
 import MedicalRecords from '../views/patient/MedicalRecords.vue'
+import DoctorDashboard from '../views/doctor/DoctorDashboard.vue'
+import DoctorConsultation from '../views/doctor/Consultation.vue'
+import PendingAppointments from '../views/doctor/PendingAppointments.vue'
+import ConsultationRecords from '../views/doctor/ConsultationRecords.vue'
+
 
 const routes = [
   {
@@ -18,8 +17,11 @@ const routes = [
     component: Login
   },
   // Patient routes
+  
+  { path: '/patient', component: PatientDashboard },
+
   {
-    path: '/patient',
+    path: '/patient/dashboard',
     name: 'PatientDashboard',
     component: PatientDashboard,
     meta: { requiresAuth: true, role: 'patient' }
@@ -57,31 +59,16 @@ const routes = [
     component: DoctorConsultation,
     meta: { requiresAuth: true, role: 'doctor' }
   },
-  // Pharmacist routes
   {
-    path: '/pharmacist',
-    name: 'PharmacistDashboard',
-    component: PharmacistDashboard,
-    meta: { requiresAuth: true, role: 'pharmacist' }
+    path: '/doctor/pending-appointments',
+    name: 'PendingAppointments',
+    component: PendingAppointments
   },
   {
-    path: '/pharmacist/about',
-    name: 'PharmacistAbout',
-    component: PharmacistAbout,
-    meta: { requiresAuth: true, role: 'pharmacist' }
+    path: '/doctor/consultation-records',
+    name: 'ConsultationRecords',
+    component: ConsultationRecords,
   },
-  {
-    path: '/pharmacist/inventory',
-    name: 'PharmacistInventory',
-    component: PharmacistInventory,
-    meta: { requiresAuth: true, role: 'pharmacist' }
-  },
-  {
-    path: '/pharmacist/process',
-    name: 'ProcessPrescription',
-    component: ProcessPrescription,
-    meta: { requiresAuth: true, role: 'pharmacist' }
-  }
 ]
 
 const router = createRouter({

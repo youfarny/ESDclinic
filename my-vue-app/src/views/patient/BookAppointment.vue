@@ -2,9 +2,8 @@
 <template>
   <div class="book-appointment-container">
   <navigation-bar />
-  
   <div class="content">
-  <h1>Book an Appointment</h1>
+    <h1>Book an Appointment</h1>
   
   <div class="appointment-type-selector">
   <div

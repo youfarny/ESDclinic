@@ -19,12 +19,12 @@
           <router-link to="/doctor/about">About</router-link>
         </template>
 
-        <template v-else-if="isAuthenticated && userRole === 'pharmacist'">
+        <!-- <template v-else-if="isAuthenticated && userRole === 'pharmacist'">
           <router-link to="/pharmacist/dashboard">Dashboard</router-link>
           <router-link to="/pharmacist/inventory">Inventory</router-link>
           <router-link to="/pharmacist/prescriptions">Prescriptions</router-link>
           <router-link to="/pharmacist/about">About</router-link>
-        </template>
+        </template> -->
 
         <template v-else>
           <router-link to="/">Home</router-link>

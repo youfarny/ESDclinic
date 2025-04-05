@@ -4,7 +4,7 @@
       <doctor-navigation />
       
       <div class="content">
-        <h1>Doctor Consultation</h1>
+        <h1>Current Consultation</h1>
         
         <div v-if="!isConsultationEnded">
           <div class="appointment-details">
@@ -127,7 +127,7 @@
   </template>
   
   <script>
-  import DoctorNavigation from '../../components/doctor/NavigationBar.vue'
+  import DoctorNavigation from '../../components/doctor/DocNavigationBar.vue'
   
   export default {
     name: 'DoctorConsultation',

@@ -15,13 +15,7 @@
             @click="activeTab = 'doctor'"
           >
             Doctor
-          </button>
-          <button 
-            :class="['tab', { 'active': activeTab === 'pharmacist' }]" 
-            @click="activeTab = 'pharmacist'"
-          >
-            Pharmacist
-          </button>
+        </button>
         </div>
         
         <form @submit.prevent="handleLogin" class="mt-6">
