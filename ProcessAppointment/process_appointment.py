@@ -6,8 +6,7 @@ from os import environ
 from datetime import datetime, timedelta, timezone
 from invokes import invoke_http
 import requests
-import google.generativeai as genai
-# from google import genai
+from google import genai
 import json
 app = Flask(__name__)
 CORS(app)
@@ -16,7 +15,7 @@ CORS(app)
 
 
 ip_address = 'localhost'
-# ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
+ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
 
 appointment_URL = f"http://{ip_address}:5100/appointment"
 patient_URL = f"http://{ip_address}:5102/patient"
@@ -715,6 +714,53 @@ def process_appointment_calculate():
         
     return jsonify({"code": 400, "message": "Invalid JSON input"}), 400
 
+
+
+@app.route("/process/finish", methods=['POST'])
+def process_appointment_finish():
+
+    if request.is_json:
+        try:
+            # Extract data from the request
+            data = request.get_json()
+            print("\nReceived post-payment request:", data)
+            appointment_id = data.get("appointment_id")
+            payment_id = data.get("payment_id")
+            payment_status  = data.get("payment_status")
+            # 18 Update payment_status in payment
+           
+            print("\n\n")
+            print("------------------------------STEP 18------------------------------")
+            patch_result = invoke_http(f"{payment_URL}", method='PATCH', json={"payment_id": payment_id})
+            print("Patch result:", patch_result)
+            
+            # 19 Update payment_id in appointment 
+           
+            print("\n\n")
+            print("------------------------------STEP 19------------------------------")
+            payment_update_payload = {
+                "appointment_id": appointment_id,
+                "payment_id": payment_id
+            }
+            print(f"\nFetching appointment details for ID: {appointment_id}...")
+            update_result = invoke_http(f"{appointment_URL}/payment", method='PATCH', json=payment_update_payload)
+            print("Payment update result:", update_result)
+      
+
+            
+            # Return payment details {payment_id, payment_amount}
+            return jsonify({
+                "code": 200,
+                "message": "Post-appointment (finish) processing completed successfully",
+                
+            }), 200
+        
+        except Exception as e:
+            print("ERROR:", str(e))
+            return jsonify({"code": 500, "message": "Internal server error", "error": str(e)}), 500
+            
+        
+    return jsonify({"code": 400, "message": "Invalid JSON input"}), 400
 
 
 if __name__ == "__main__":
