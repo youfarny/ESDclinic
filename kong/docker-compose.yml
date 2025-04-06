@@ -72,8 +72,13 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     restart: always
+    environment:
+      GF_SECURITY_ADMIN_USER: "admin"
+      GF_SECURITY_ADMIN_PASSWORD: "ESD213password!"
+      GF_SECURITY_DISABLE_FORCE_PASSWORD_CHANGE: "true"
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./grafana-provisioning:/etc/grafana/provisioning
     ports:
       - "3000:3000"
     networks:
