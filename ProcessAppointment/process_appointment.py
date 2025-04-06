@@ -25,7 +25,7 @@ payment_URL = f"http://{ip_address}:5105/payment"
 
 # BEFORE APPOINTMENT
 @app.route("/process/new", methods=['POST'])
-def process_appointment_before():
+def process_appointment_new():
 
     # 3 Get recommended doctor using patient_id, request_doctor, patient_symptoms, patient_contact
     if request.is_json:
@@ -67,7 +67,6 @@ def process_appointment_before():
                     print("------------------------------STEP B1 & B2------------------------------")
                     print("\nFetching previous doctor from past appointments...")
                     previous_appointments = invoke_http(f"{appointment_URL}/records/{patient_id}", method='GET')
-                    print("Previous appointments:", previous_appointments)
 
                     if isinstance(previous_appointments, list) and len(previous_appointments) > 0:
 
@@ -75,6 +74,7 @@ def process_appointment_before():
                         sorted_appointments = sorted(previous_appointments, key=lambda x: x.get("start_time") or "", reverse=True)
                         # Most recent appointment
                         last_appointment = sorted_appointments[0]  
+                        print("Most recent appointment:", sorted_appointments)
                         # Extract doctor_id safely
                         selected_doctor_id = last_appointment.get("doctor_id")
 
@@ -146,7 +146,7 @@ def process_appointment_before():
             # 11 Return new appointment {appointment_id, doctor_name, doctor_id, queue_length}
             return jsonify({
                 "code": 200,
-                "message": "Appointment successfully added to queue",
+                "message": "Appointment created successfully",
                 "data": {
                     "appointment_id": new_appointment_id,
                     "doctor_name": doctor_name,
@@ -579,13 +579,13 @@ def process_appointment_end():
         print("ERROR:", str(e))
         return jsonify({"code": 500, "message": "Internal server error", "error": str(e)}), 500
 
+
+
+
 # AFTER APPOINTMENT
-@app.route("/process_calculate", methods=['POST'])
+@app.route("/process/calculate", methods=['POST'])
 def process_appointment_calculate():
-    """
-    Handles the post-appointment workflow including prescription retrieval,
-    payment processing, and notifications
-    """
+
     if request.is_json:
         try:
             # Extract data from the request
@@ -593,17 +593,17 @@ def process_appointment_calculate():
             print("\nReceived post-appointment request:", data)
             
             appointment_id = data.get("appointment_id")
-            patient_id = data.get("patient_id")
-            prescription_id = data.get("prescription_id")
-
+        
             if not appointment_id:
                 return jsonify({"code": 400, "message": "Missing required field: appointment_id"}), 400
             
-            # 1) Request appointment info
+            # 4 Get appointment info 
+            # 5 Return appointment info {patient_id, start_time, end_time, prescription_id}
+            print("\n\n")
+            print("------------------------------STEP 4 & 5------------------------------")
             print(f"\nFetching appointment details for ID: {appointment_id}...")
             appointment_result = invoke_http(f"{appointment_URL}/{appointment_id}", method='GET')
-            print('Appointment result:', appointment_result)
-            
+           
             if "error" in appointment_result:
                 return jsonify({
                     "code": 500, 
@@ -612,19 +612,74 @@ def process_appointment_calculate():
                 }), 500
             
             # Extract necessary details
-            if not patient_id:
-                patient_id = appointment_result.get("patient_id")
-                if not patient_id:
-                    return jsonify({"code": 400, "message": "Missing patient_id in appointment data"}), 400
-            
+            patient_id = appointment_result.get("patient_id")
             start_time = appointment_result.get("start_time")
             end_time = appointment_result.get("end_time")
+            prescription_id = appointment_result.get("prescription_id")
+            print('patient_id:', patient_id)
+            print('start_time:', start_time)
+            print('end_time:', end_time)
+            print('prescription_id:', prescription_id)
+            # Convert strings to datetime objects
+            start_time = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
+            end_time = datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S")
+
+            # Calculate the time difference
+            time_diff = end_time - start_time
+            consultation_duration_minutes = time_diff.total_seconds()/60
+            consultation_duration_minutes = time_diff.total_seconds()/60
+            print('Consultation duration (minute):', consultation_duration_minutes)
+            consultation_cost = float(consultation_duration_minutes * 1.5) # consultation rate
+            print('Consultation Cost: $', consultation_cost)
+
+
+            # 6 Get prescription {prescription_id}
+            # 7 Return prescription {prescription_id, prescription}
+            print("\n\n")
+            print("------------------------------STEP 6 & 7------------------------------")
+            if prescription_id:
+                print(f"\nFetching prescription details for ID: {prescription_id}...")
+                prescription_result = invoke_http(f"{prescription_URL}/{prescription_id}", method='GET')
+                medicine_list = prescription_result['prescription']["medicine"]
+                print('Prescriptions:', medicine_list)
+                
+                if "error" in prescription_result:
+                    print(f"Warning: Failed to retrieve prescription details: {prescription_result}")
+
+
+
+            # 8 Check insurance {patient_id}
+            # 9 Return insurance status {patient_id, patient_contact, patient_address, insurance}
+            print("\n\n")
+            print("------------------------------STEP 8 & 9------------------------------")
+            print(f"\nFetching patient details for ID: {patient_id}...")
+            patient_insurance = invoke_http(f"{patient_URL}/insurance/{patient_id}", method='GET')
+            print('Patient insurance',patient_insurance)
+  
             
-            # 2) Process payment
+            
+
+  
+            # 10 Get cost of medicine
+            # 11 Return cost of medicine
+            print("\n\n")
+            print("------------------------------STEP 10 & 11------------------------------")
+            
+            calculate_medicines = invoke_http(f"{prescription_URL}/calculate_cost", method='POST', json={"medicines": medicine_list})
+            total_cost =float(calculate_medicines['total_cost']) + consultation_cost
+            print('Total Cost (consultation + medicine): $',total_cost)
+           
+
+            # 12 Create new payment request
+            # 13 Return payment_id {payment_id, status}
+            print("\n\n")
+            print("------------------------------STEP 12 & 13------------------------------")
+
             payment_data = {
                 "appointment_id": appointment_id,
+                "payment_amount": total_cost,
+                "insurance": patient_insurance['patient_insurance']
 
-                "payment_amount": 50.0  # Replace with actual logic to determine the amount
             }
 
             print("\nPosting payment information...")
@@ -641,89 +696,71 @@ def process_appointment_calculate():
             payment_id = process_payment.get("payment_id")
             payment_status = process_payment.get("payment_status", False)  # Default to False if not provided
             
-            # 3) Get prescription details (optional)
-            prescription_result = {"message": "No prescription required"}
-            if prescription_id:
-                print(f"\nFetching prescription details for ID: {prescription_id}...")
-                prescription_result = invoke_http(f"{prescription_URL}/{prescription_id}", method='GET')
-                print('Prescription result:', prescription_result)
-                
-                if "error" in prescription_result:
-                    print(f"Warning: Failed to retrieve prescription details: {prescription_result}")
-
-            # 4) Check insurance information
-            print(f"\nFetching patient details for ID: {patient_id}...")
-            patient_result = invoke_http(f"{patient_URL}/{patient_id}", method='GET')
-            print('Patient result:', patient_result)
             
-            if "error" in patient_result:
-                return jsonify({
-                    "code": 500, 
-                    "message": "Failed to retrieve patient details", 
-                    "data": patient_result
-                }), 500
-            
-            patient_contact = patient_result.get("patient_contact")
-            patient_insurance = patient_result.get("insurance", {})
-            
-            # # 5) Send payment notification
-            # notification_data = {
-            #     "patient_contact": patient_contact,
-            #     "payment_amount": payment_data["payment_amount"],
-            #     "appointment_id": appointment_id,
-            #     "payment_id": payment_id
-            # }
-            
-            # print("\nSending payment notification...")
-            # notification_result = invoke_http(f"{notification_URL}", method='POST', json=notification_data)
-            # print('Notification result:', notification_result)
-            
-            # if "error" in notification_result:
-            #     print(f"Warning: Failed to send notification: {notification_result}")
-
-
-            
-            # 6) Check payment status
-            print("\nChecking payment status...")
-            check_result = invoke_http(f"{payment_URL}/{payment_id}", method='GET')
-            print('Check result:', check_result)
-
-            if "error" in check_result:
-                return jsonify({
-                    "code": 500,
-                    "message": "Failed to verify payment status",
-                    "data": check_result
-                }), 500
-            
+            # Return payment details {payment_id, payment_amount}
             return jsonify({
                 "code": 200,
-                "message": "Post-appointment processing completed successfully",
+                "message": "Post-appointment (calculate) processing completed successfully",
                 "data": {
-                    "appointment_details": appointment_result,
-                    "prescription_details": prescription_result,
-                    "payment_details": {
-                        "payment_id": payment_id,
-                        "payment_status": check_result.get("success", False),
-                        "payment_amount": payment_data["payment_amount"]
-                    },
-                    "insurance_details": patient_insurance,
-                
+                    "payment_id": payment_id,
+                    "payment_amount": total_cost    
                 }
             }), 200
         
         except Exception as e:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            ex_str = f"{str(e)} at {str(exc_type)}: {fname}: line {str(exc_tb.tb_lineno)}"
-            print("ERROR:", ex_str)
+            print("ERROR:", str(e))
+            return jsonify({"code": 500, "message": "Internal server error", "error": str(e)}), 500
             
-            return jsonify({
-                "code": 500,
-                "message": "Internal server error: " + ex_str
-            }), 500
-
+        
     return jsonify({"code": 400, "message": "Invalid JSON input"}), 400
 
+
+
+@app.route("/process/finish", methods=['POST'])
+def process_appointment_finish():
+
+    if request.is_json:
+        try:
+            # Extract data from the request
+            data = request.get_json()
+            print("\nReceived post-payment request:", data)
+            appointment_id = data.get("appointment_id")
+            payment_id = data.get("payment_id")
+            payment_status  = data.get("payment_status")
+            # 18 Update payment_status in payment
+           
+            print("\n\n")
+            print("------------------------------STEP 18------------------------------")
+            patch_result = invoke_http(f"{payment_URL}", method='PATCH', json={"payment_id": payment_id})
+            print("Patch result:", patch_result)
+            
+            # 19 Update payment_id in appointment 
+           
+            print("\n\n")
+            print("------------------------------STEP 19------------------------------")
+            payment_update_payload = {
+                "appointment_id": appointment_id,
+                "payment_id": payment_id
+            }
+            print(f"\nFetching appointment details for ID: {appointment_id}...")
+            update_result = invoke_http(f"{appointment_URL}/payment", method='PATCH', json=payment_update_payload)
+            print("Payment update result:", update_result)
+      
+
+            
+            # Return payment details {payment_id, payment_amount}
+            return jsonify({
+                "code": 200,
+                "message": "Post-appointment (finish) processing completed successfully",
+                
+            }), 200
+        
+        except Exception as e:
+            print("ERROR:", str(e))
+            return jsonify({"code": 500, "message": "Internal server error", "error": str(e)}), 500
+            
+        
+    return jsonify({"code": 400, "message": "Invalid JSON input"}), 400
 
 
 if __name__ == "__main__":

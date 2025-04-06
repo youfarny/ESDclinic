@@ -67,7 +67,7 @@ def get_medicine_cost(medicine_name):
 
     return jsonify({"medicine": medicine.indiv_medicine, "cost": medicine.cost}), 200
 
-@app.route("/calculate-cost", methods=['POST'])
+@app.route("/prescription/calculate_cost", methods=['POST'])
 def calculate_medicine_cost():
     """
     Calculate total cost of multiple medicines
@@ -99,6 +99,7 @@ def calculate_medicine_cost():
         description: Invalid medicine list
     """
     data = request.get_json()
+    print("Incoming request:", data)
     if 'medicines' not in data or not isinstance(data['medicines'], list):
         return jsonify({"error": "Invalid medicine list"}), 400
 
