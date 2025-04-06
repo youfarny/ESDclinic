@@ -6,8 +6,8 @@ from os import environ
 from datetime import datetime, timedelta, timezone
 from invokes import invoke_http
 import requests
-# from google import genai
-import google.generativeai as genai
+from google import genai
+# import google.generativeai as genai
 import json
 app = Flask(__name__)
 CORS(app)
@@ -203,7 +203,7 @@ def process_appointment_start():
     print("\n\n")
     print("!!!------------------------------NEW REQUEST TO /process/start------------------------------!!!")
     gmt_plus_8 = timezone(timedelta(hours=8))
-    start_time = data.get("startTime", datetime.now(gmt_plus_8).isoformat())
+    start_time = datetime.now(gmt_plus_8).isoformat()
     print(start_time)
 
 
@@ -414,7 +414,7 @@ def process_appointment_end():
     print("\n\n")
     print("!!!------------------------------NEW REQUEST TO /process/end------------------------------!!!")
     gmt_plus_8 = timezone(timedelta(hours=8))
-    end_time = data.get("startTime", datetime.now(gmt_plus_8).isoformat())
+    end_time = datetime.now(gmt_plus_8).isoformat()
     print(end_time)
 
     # 13 Send appointment info at end of appointment
