@@ -99,7 +99,6 @@ def calculate_medicine_cost():
         description: Invalid medicine list
     """
     data = request.get_json()
-    print("Incoming request:", data)
     if 'medicines' not in data or not isinstance(data['medicines'], list):
         return jsonify({"error": "Invalid medicine list"}), 400
 

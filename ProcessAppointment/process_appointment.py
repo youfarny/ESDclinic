@@ -6,7 +6,8 @@ from os import environ
 from datetime import datetime, timedelta, timezone
 from invokes import invoke_http
 import requests
-from google import genai
+# from google import genai
+import google.generativeai as genai
 import json
 app = Flask(__name__)
 CORS(app)
@@ -15,13 +16,14 @@ CORS(app)
 
 
 ip_address = 'localhost'
-ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
+# ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
 
 appointment_URL = f"http://{ip_address}:5100/appointment"
 patient_URL = f"http://{ip_address}:5102/patient"
 queue_URL = f"http://{ip_address}:5103/queue"
 prescription_URL = f"http://{ip_address}:5104/prescription"
 payment_URL = f"http://{ip_address}:5105/payment"
+notification_URL = f"http://{ip_address}:5672/send_notification"
 
 # BEFORE APPOINTMENT
 @app.route("/process/new", methods=['POST'])
@@ -50,6 +52,7 @@ def process_appointment_new():
                 # A1 If no doctor is requested, get shortest queue doctor
                 # A2 Return doctor
                 if request_doctor=='':
+                    print("\n\n")
                     print("------------------------------STEP A1 & A2------------------------------")
                     print("\nAssigning doctor from shortest queue...")
                     queue_result = invoke_http(f"{queue_URL}/shortest", method='GET')
@@ -64,6 +67,7 @@ def process_appointment_new():
                 # B1 Get patient records
                 # B2 Return patient's records → Get the previous doctor 
                 elif request_doctor=="same":
+                    print("\n\n")
                     print("------------------------------STEP B1 & B2------------------------------")
                     print("\nFetching previous doctor from past appointments...")
                     previous_appointments = invoke_http(f"{appointment_URL}/records/{patient_id}", method='GET')
@@ -74,7 +78,7 @@ def process_appointment_new():
                         sorted_appointments = sorted(previous_appointments, key=lambda x: x.get("start_time") or "", reverse=True)
                         # Most recent appointment
                         last_appointment = sorted_appointments[0]  
-                        print("Most recent appointment:", sorted_appointments)
+                        print("Most recent appointment:", last_appointment)
                         # Extract doctor_id safely
                         selected_doctor_id = last_appointment.get("doctor_id")
 
@@ -97,6 +101,7 @@ def process_appointment_new():
             else:
                 # C1 Get doctor_id if doctor is requested
                 # C2 Return doctor_id
+                print("\n\n")
                 print("------------------------------STEP C1 & C2------------------------------")
                 doctor_name = request_doctor
                 print(f"\nFetching doctor ID for {request_doctor}...")
@@ -123,7 +128,7 @@ def process_appointment_new():
                 "doctor_id": selected_doctor_id,
                 "patient_symptoms": patient_symptoms
             }
-           
+            print("\n\n")
             print("------------------------------STEP 5 & 6------------------------------")
             print(f"Creating new appointment")
             new_appointment_result = invoke_http(f"{appointment_URL}/new", method='POST', json=appointment_data)
@@ -135,10 +140,30 @@ def process_appointment_new():
             print("New apppointment ID: ", new_appointment_id)
 
 
+            # 7 {doctor_id, doctor_name, appointment_id, patient_contact}
+            print("\n\n")
+            print("------------------------------STEP 7------------------------------")
 
+            # Prepare the payload with required data
+            notification_data = {
+                "notification_type": "appointment_confirmation",
+                "appointment_id": new_appointment_id, 
+                "doctor_id": selected_doctor_id,   
+                "doctor_name": doctor_name,     
+                "patient_contact": patient_contact 
+            }
+            # Send the POST request
+            response = requests.post(notification_URL, json=notification_data)
 
+            # Process the response
+            queue_length = None
+            if response.status_code in range(200, 300):
+                result = response.json()
+                queue_length = result.get("data", {}).get("queue_length")
+                print(f"Queue length for appointment {new_appointment_id}: {queue_length}")
+            else:
+                print(f"Error in notification service: {response.status_code} - {response.text}")
 
-            # Get queue length from send notification
 
 
 
