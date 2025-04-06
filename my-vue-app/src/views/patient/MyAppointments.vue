@@ -73,9 +73,12 @@ export default {
       const formattedHours = hours % 12 || 12;
       return `${formattedHours}:${minutes} ${period}`;
     },
-    proceedToPay(appointment) {
-      alert(`Proceeding to pay for ${appointment.doctorName}`);
-    }
+    async proceedToPay(appointment) {
+      // alert(`Proceeding to pay for ${appointment.doctorName}`);
+  window.location.href = 'http://localhost:5200/create-checkout-session';
+
+}
+
   }
 };
 </script>

@@ -12,7 +12,8 @@ stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 def index():
     return render_template('index.html')
 
-@app.route('/create-checkout-session', methods=['POST'])
+@app.route('/create-checkout-session', methods=['GET','POST'])
+#@app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
     # Hardcoded values for testing
     appointment_id = "AP12345"
