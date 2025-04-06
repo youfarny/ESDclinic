@@ -73,13 +73,57 @@ export default {
       const formattedHours = hours % 12 || 12;
       return `${formattedHours}:${minutes} ${period}`;
     },
-    async proceedToPay(appointment) {
-      // alert(`Proceeding to pay for ${appointment.doctorName}`);
-  window.location.href = 'http://localhost:5200/create-checkout-session';
+
+//     async proceedToPay(appointment) {
+// // alert(`Proceeding to pay for ${appointment.doctorName}`);
+//   window.location.href = 'https://personal-5nnqipga.outsystemscloud.com/Stripe/rest/payments/checkout';
+//   // window.location.href = 'http://localhost:5200/create-checkout-session';
+
+// }
+   
+async proceedToPay(appointment) {
+  try {
+    const payload = {
+      mode: 'payment',
+      success_url: 'http://localhost:5173/patient/appointments',
+      cancel_url: 'https://httpbin.org/status/200',
+      currency: 'usd',
+      product_name: `Consultation with ${appointment.doctorName}`,
+      unit_amount: 500, // or appointment.price if you define it
+      quantity: 1
+    };
+
+    console.log('Sending payload to OutSystems:', payload);
+
+    const response = await fetch('https://personal-5nnqipga.outsystemscloud.com/Stripe/rest/payments/checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    console.log('Payment response:', data);
+
+    // Try using the correct key (if it's something like 'url' or 'redirect_url')
+    if (data.url || data.redirect_url || data.checkout_url) {
+      window.location.href = data.url || data.redirect_url || data.checkout_url;
+    } else {
+      alert('Payment created, but no redirect URL returned!');
+    }
+
+  } catch (error) {
+    console.error('Stripe error:', error);
+    alert('Payment failed');
+  }
+}
 
 }
 
-  }
+
+
+  
 };
 </script>
 
