@@ -16,4 +16,5 @@ mysql-connector-python==8.3.0
 requests==2.31.0
 google-genai==1.9.0
 pika==1.2.0
+flasgger==0.9.7.1
 
