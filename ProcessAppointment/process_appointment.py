@@ -15,8 +15,8 @@ CORS(app)
 # Define service URLs
 
 
-ip_address = 'localhost'
-# ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
+# ip_address = 'localhost'
+ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
 
 appointment_URL = f"http://{ip_address}:5100/appointment"
 patient_URL = f"http://{ip_address}:5102/patient"
