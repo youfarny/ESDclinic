@@ -97,8 +97,8 @@ def process_appointment_new():
               example: ["Fever", "Headache"]
               description: List of patient symptoms
             patient_contact:
-              type: integer
-              example: 91234567
+              type: string
+              example: "+6597208453"
               description: Patient contact number
     responses:
       200:
@@ -380,6 +380,10 @@ def process_appointment_start():
           required:
             - doctor_id
           properties:
+            apikey:
+              type: string
+              example: admin
+              description: API key for authentication
             doctor_id:
               type: integer
               example: 1
@@ -633,6 +637,10 @@ def process_appointment_end():
             - appointment_id
             - patient_id
           properties:
+            apikey:
+              type: string
+              example: admin
+              description: API key for authentication
             appointment_id:
               type: integer
               example: 1
@@ -896,6 +904,10 @@ def process_appointment_calculate():
           required:
             - appointment_id
           properties:
+            apikey:
+              type: string
+              example: admin
+              description: API key for authentication
             appointment_id:
               type: integer
               example: 1
@@ -1076,6 +1088,10 @@ def process_appointment_finish():
               - payment_id
               - payment_status
             properties:
+              apikey:
+                type: string
+                example: admin
+                description: API key for authentication
               appointment_id:
                 type: string
                 description: ID of the appointment to update
