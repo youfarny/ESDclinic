@@ -182,9 +182,10 @@ def process_appointment_new():
                 "patient_contact": patient_contact,
                 "appointment_type": "before" 
             }
+
+
             # AMQP connection parameters
-            queue_name = "sms_queue"
-            response_queue = None
+            exchange_name = 'esd_clinic'
             queue_length = None
             correlation_id = str(uuid.uuid4())
          
@@ -198,10 +199,11 @@ def process_appointment_new():
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
 
-            channel.exchange_declare(exchange='esd_clinic', exchange_type='topic', durable=True)
+            channel.exchange_declare(exchange=exchange_name, exchange_type='topic', durable=True)
             # Ensure the queue exists (durable = True for persistence)
-            result =channel.queue_declare(queue=queue_name)
+            result = channel.queue_declare(queue='', exclusive=True, auto_delete=True)
             callback_queue = result.method.queue
+
             def on_response(ch, method, props, body):
                 nonlocal queue_length
                 if props.correlation_id == correlation_id:
