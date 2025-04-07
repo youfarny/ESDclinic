@@ -1018,7 +1018,7 @@ def process_appointment_calculate():
             print("------------------------------STEP 10 & 11------------------------------")
             
             calculate_medicines = invoke_http(f"{prescription_URL}/calculate_cost", method='POST', json={"medicines": medicine_list})
-            total_cost =float(calculate_medicines['total_cost']) + consultation_cost
+            total_cost =round(float(calculate_medicines['total_cost']) + consultation_cost,2)
             print('Total Cost (consultation + medicine): $',total_cost)
            
 
