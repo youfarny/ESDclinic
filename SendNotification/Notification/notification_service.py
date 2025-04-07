@@ -53,16 +53,16 @@ def craft_message(appointment_type, patient_contact, queue_length=None, payment_
 def callback(ch, method, properties, body):
     # Decode the message
     message_data = json.loads(body)
-    
-    # Extract the variables from the message
+
+    # Extract message info
     appointment_type = message_data.get('appointment_type')
     patient_contact = message_data.get('patient_contact')
     queue_length = message_data.get('queue_length', None)
     payment_amount = message_data.get('payment_amount', None)
-    
-    # Craft the message based on the appointment type
+
+    # Craft the outgoing message
     message = craft_message(appointment_type, patient_contact, queue_length, payment_amount)
-    
+
     # Send the message via Twilio
     try:
         msg = client.messages.create(
@@ -71,11 +71,36 @@ def callback(ch, method, properties, body):
             to=patient_contact
         )
         print(f"Message sent to {patient_contact}: {msg.sid}")
+        # You can use this if you want to return it as part of the response:
+        response_payload = {
+            "queue_length": queue_length or 3,  # Replace with real logic if needed
+            "message_sid": msg.sid,
+            "status": "sent"
+        }
+
     except Exception as e:
         print(f"Failed to send message to {patient_contact}: {e}")
-    
+        response_payload = {
+            "error": str(e),
+            "status": "failed"
+        }
+
+    # Send response if reply_to and correlation_id are set
+    if properties.reply_to and properties.correlation_id:
+        ch.basic_publish(
+            exchange='',
+            routing_key=properties.reply_to,
+            properties=pika.BasicProperties(
+                correlation_id=properties.correlation_id,
+                content_type='application/json'
+            ),
+            body=json.dumps(response_payload)
+        )
+        print(f"✔ Sent response back to {properties.reply_to}")
+
     # Acknowledge the message
     ch.basic_ack(delivery_tag=method.delivery_tag)
+
 
 def start_consuming():
     channel.basic_consume(queue=QUEUE_NAME, on_message_callback=callback, auto_ack=False)
