@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import sys
+import uuid
 from os import environ
 from datetime import datetime, timedelta, timezone
 from invokes import invoke_http
@@ -180,20 +181,55 @@ def process_appointment_new():
                 "doctor_name": doctor_name,     
                 "patient_contact": patient_contact 
             }
+            # AMQP connection parameters
+            queue_name = "sms_queue"
+            response_queue = None
+            queue_length = None
+            correlation_id = str(uuid.uuid4())
+         
 
             credentials = pika.PlainCredentials('admin', 'ESD213password!')
             parameters = pika.ConnectionParameters(host=ip_address, credentials=credentials)
-
+            
+            # Establish connection and channel
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
-            channel.queue_declare(queue='sms_queue')
 
+            # Ensure the queue exists (durable = True for persistence)
+            result =channel.queue_declare(queue=queue_name)
+            callback_queue = result.method.queue
+            def on_response(ch, method, props, body):
+                nonlocal queue_length
+                if props.correlation_id == correlation_id:
+                    response = json.loads(body)
+                    queue_length = response.get('queue_length')
+
+            channel.basic_consume(queue=callback_queue, on_message_callback=on_response, auto_ack=True)
+
+            # Publish the message with persistence and content-type
             channel.basic_publish(
                 exchange='',
-                routing_key='sms_queue',
-                body=json.dumps(notification_data)
+                routing_key=queue_name,
+                body=json.dumps(notification_data),
+                properties=pika.BasicProperties(
+                    reply_to=callback_queue,
+                    correlation_id=correlation_id,
+                    delivery_mode=2,  # Make message persistent
+                    content_type='application/json'
+                )
             )
-            # connection.close()
+
+            # print(f"Notification for appointment {new_appointment_id} sent to '{queue_name}'.")
+
+            print(f"Waiting for queue_length response for appointment {new_appointment_id}...")
+
+            # Wait for the response
+            while queue_length is None:
+                connection.process_data_events(time_limit=1)
+
+            print(f"Queue length for appointment {new_appointment_id}: {queue_length}")
+
+            connection.close()
 
             """
             # Send the POST request
@@ -220,7 +256,7 @@ def process_appointment_new():
                     "appointment_id": new_appointment_id,
                     "doctor_name": doctor_name,
                     "doctor_id": selected_doctor_id,
-                    # "queue_length": queue_length
+                    "queue_length": queue_length
                 }
             }), 200
 
