@@ -179,7 +179,8 @@ def process_appointment_new():
                 "appointment_id": new_appointment_id, 
                 "doctor_id": selected_doctor_id,   
                 "doctor_name": doctor_name,     
-                "patient_contact": patient_contact 
+                "patient_contact": patient_contact,
+                "appointment_type": "before" 
             }
             # AMQP connection parameters
             queue_name = "sms_queue"
@@ -188,6 +189,8 @@ def process_appointment_new():
             correlation_id = str(uuid.uuid4())
          
 
+            print(notification_data)
+
             credentials = pika.PlainCredentials('admin', 'ESD213password!')
             parameters = pika.ConnectionParameters(host=ip_address, credentials=credentials)
             
@@ -195,6 +198,7 @@ def process_appointment_new():
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
 
+            channel.exchange_declare(exchange='esd_clinic', exchange_type='topic', durable=True)
             # Ensure the queue exists (durable = True for persistence)
             result =channel.queue_declare(queue=queue_name)
             callback_queue = result.method.queue
@@ -208,8 +212,8 @@ def process_appointment_new():
 
             # Publish the message with persistence and content-type
             channel.basic_publish(
-                exchange='',
-                routing_key=queue_name,
+                exchange='esd_clinic',
+                routing_key="notification",
                 body=json.dumps(notification_data),
                 properties=pika.BasicProperties(
                     reply_to=callback_queue,

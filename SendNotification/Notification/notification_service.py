@@ -17,7 +17,7 @@ client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 # RabbitMQ Connection
 RABBITMQ_HOST = '116.15.73.191'  # Your on-prem RabbitMQ IP
 RABBITMQ_PORT = 5672  # AMQP port
-QUEUE_NAME = 'sms_queue'
+QUEUE_NAME = 'notification_queue'
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(
     host=RABBITMQ_HOST,
@@ -26,7 +26,10 @@ connection = pika.BlockingConnection(pika.ConnectionParameters(
 ))
 
 channel = connection.channel()
-channel.queue_declare(queue='sms_queue')
+channel.queue_declare(queue='notification_queue', durable=True)
+
+# Declare the exchange (type can be 'direct', 'topic', etc. — adjust as needed)
+channel.exchange_declare(exchange='esd_clinic', exchange_type='topic', durable=True)
 
 def craft_message(appointment_type, patient_contact, queue_length=None, payment_amount=None):
     if appointment_type == 'before':
@@ -52,8 +55,8 @@ def callback(ch, method, properties, body):
     message_data = json.loads(body)
     
     # Extract the variables from the message
-    appointment_type = message_data['appointment_type']
-    patient_contact = message_data['patient_contact']
+    appointment_type = message_data.get('appointment_type')
+    patient_contact = message_data.get('patient_contact')
     queue_length = message_data.get('queue_length', None)
     payment_amount = message_data.get('payment_amount', None)
     
@@ -101,8 +104,8 @@ def send_notification():
 
     # Send the message to RabbitMQ
     channel.basic_publish(
-        exchange='',
-        routing_key='sms_queue',
+        exchange='esd_clinic',
+        routing_key='sms',
         body=message
     )
 
@@ -113,7 +116,7 @@ def send_notification():
 print("Worker is waiting for messages. To exit press CTRL+C")
 #channel.start_consuming()
 
-if __name__ == 'main':
+if __name__ == '__main__':
     start_rabbitmq_consumer()
     app.run(debug=True, host='0.0.0.0')
 
