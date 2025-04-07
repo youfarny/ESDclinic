@@ -9,6 +9,7 @@ import requests
 from google import genai
 # import google.generativeai as genai
 import json
+import pika
 app = Flask(__name__)
 CORS(app)
 
@@ -28,8 +29,22 @@ notification_URL = f"http://{ip_address}:5672/send_notification"
 # BEFORE APPOINTMENT
 @app.route("/process/new", methods=['POST'])
 def process_appointment_new():
+    """
+    {
+        "apikey": "admin",
+        "patient_id": 1,
+        "request_doctor": "",
+        "patient_symptoms": ["Fever", "Headache"],
+        "patient_contact": 91234567
+    }
+    """
 
-    # 3 Get recommended doctor using patient_id, request_doctor, patient_symptoms, patient_contact
+
+    # 3 Get recommended doctor using 
+    # patient_id, request_doctor, patient_symptoms, patient_contact
+
+    print("\n\n")
+    print("------------------------------STEP 3------------------------------")
     if request.is_json:
         try:
             appointment_data = request.get_json()
@@ -46,6 +61,11 @@ def process_appointment_new():
             if not patient_contact:
                 return jsonify({"code": 400, "message": "Missing patient contact information"}), 400
             
+
+
+
+
+
 
             if request_doctor=='' or request_doctor=='same':
 
@@ -120,6 +140,13 @@ def process_appointment_new():
                     return jsonify({"code": 400, "message": "Invalid doctor name provided"}), 400
 
         
+
+
+
+
+
+
+        
             # 5 Create a new appointment {patient_id, doctor_id, symptoms}
             # 6 Return new appointment {appointment_id}
            
@@ -144,6 +171,7 @@ def process_appointment_new():
             print("\n\n")
             print("------------------------------STEP 7------------------------------")
 
+            
             # Prepare the payload with required data
             notification_data = {
                 "notification_type": "appointment_confirmation",
@@ -152,6 +180,22 @@ def process_appointment_new():
                 "doctor_name": doctor_name,     
                 "patient_contact": patient_contact 
             }
+
+            credentials = pika.PlainCredentials('admin', 'ESD213password!')
+            parameters = pika.ConnectionParameters(host=ip_address, credentials=credentials)
+
+            connection = pika.BlockingConnection(parameters)
+            channel = connection.channel()
+            channel.queue_declare(queue='sms_queue')
+
+            channel.basic_publish(
+                exchange='',
+                routing_key='sms_queue',
+                body=json.dumps(notification_data)
+            )
+            # connection.close()
+
+            """
             # Send the POST request
             response = requests.post(notification_URL, json=notification_data)
 
@@ -163,7 +207,7 @@ def process_appointment_new():
                 print(f"Queue length for appointment {new_appointment_id}: {queue_length}")
             else:
                 print(f"Error in notification service: {response.status_code} - {response.text}")
-
+            """
 
 
 

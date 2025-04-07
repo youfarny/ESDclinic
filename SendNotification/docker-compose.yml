@@ -1,0 +1,9 @@
+services:
+  notification:
+    build:
+      context: ./notification
+      dockerfile: Dockerfileworker
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./notification:/app/notification
