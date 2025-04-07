@@ -13,6 +13,38 @@ import json
 import pika
 app = Flask(__name__)
 CORS(app)
+from flasgger import Swagger
+# Initialize Swagger with configuration
+swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": "apispec_1",
+            "route": "/apispec_1.json",
+            "rule_filter": lambda rule: True,
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "static_url_path": "/flasgger_static",
+    "swagger_ui": True,
+    "specs_route": "/swagger/"
+}
+
+swagger_template = {
+    "swagger": "2.0",
+    "info": {
+        "title": "Clinic Process API",
+        "description": "API for managing clinic appointment processes",
+        "version": "1.0.0"
+    },
+    "basePath": "/",
+    "schemes": [
+        "http",
+        "https"
+    ],
+}
+
+swagger = Swagger(app, config=swagger_config, template=swagger_template)
 
 # Define service URLs
 
@@ -39,7 +71,73 @@ def process_appointment_new():
         "patient_contact": 91234567
     }
     """
-
+    """
+    Create a new appointment
+    ---
+    tags:
+      - Appointments
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          id: new_appointment
+          required:
+            - patient_id
+            - patient_contact
+          properties:
+            apikey:
+              type: string
+              example: admin
+              description: API key for authentication
+            patient_id:
+              type: integer
+              example: 1
+              description: ID of the patient
+            request_doctor:
+              type: string
+              example: ""
+              description: Optional specific doctor request, leave empty for shortest queue
+            patient_symptoms:
+              type: array
+              items:
+                type: string
+              example: ["Fever", "Headache"]
+              description: List of patient symptoms
+            patient_contact:
+              type: integer
+              example: 91234567
+              description: Patient contact number
+    responses:
+      200:
+        description: Appointment created successfully
+        schema:
+          properties:
+            code:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: Appointment created successfully
+            data:
+              properties:
+                appointment_id:
+                  type: integer
+                  example: 123
+                doctor_name:
+                  type: string
+                  example: Dr. Smith
+                doctor_id:
+                  type: integer
+                  example: 456
+                queue_length:
+                  type: integer
+                  example: 3
+      400:
+        description: Invalid input data
+      500:
+        description: Server error
+    """
 
     # 3 Get recommended doctor using 
     # patient_id, request_doctor, patient_symptoms, patient_contact
@@ -275,14 +373,57 @@ def process_appointment_new():
 @app.route("/process/start", methods=['POST'])
 def process_appointment_start():
     """
-    Starts an appointment for a doctor by retrieving the next patient from the queue.
-    - Gets the next appointment in the queue.
-    - Deletes it from the queue.
-    - Fetches appointment details.
-    - Updates the appointment with start_time and notes.
-    - Retrieves the patient's allergies from the patient database.
-    - Returns the updated appointment details along with the allergies.
-    - {doctor_id: 1}
+    Start an appointment for a doctor by retrieving the next patient from the queue
+    ---
+    tags:
+      - Appointments
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          id: start_appointment
+          required:
+            - doctor_id
+          properties:
+            doctor_id:
+              type: integer
+              example: 1
+              description: ID of the doctor to start an appointment for
+    responses:
+      200:
+        description: Appointment started successfully
+        schema:
+          properties:
+            code:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: Appointment started successfully
+            appointment_id:
+              type: integer
+              example: 123
+            patient_id:
+              type: integer
+              example: 456
+            patient_allergies:
+              type: array
+              items:
+                type: string
+              example: ["Penicillin", "Peanuts"]
+            patient_symptoms:
+              type: array
+              items:
+                type: string
+              example: ["Fever", "Headache"]
+            notes:
+              type: object
+              description: AI-recommended diagnoses
+      404:
+        description: No appointments in queue
+      500:
+        description: Server error
     """
     print("\n\n")
     print("!!!------------------------------NEW REQUEST TO /process/start------------------------------!!!")
@@ -484,15 +625,68 @@ def process_appointment_start():
 @app.route("/process/end", methods=['POST'])
 def process_appointment_end():
     """
-    Ends an appointment by updating the appointment details with end time, diagnosis, and medicine.
-    - Creates a prescription if medicine is provided.
-    - Updates the appointment record with end time, diagnosis, and prescription ID.
-    - {
-        appointment_id: 1,
-        patient_id: 1,
-        diagnosis: "Flu",
-        medicine: ["Antibiotics", "Antihistamines"]
-      }
+    End an appointment by updating details with end time, diagnosis, and medicine
+    ---
+    tags:
+      - Appointments
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          id: end_appointment
+          required:
+            - appointment_id
+            - patient_id
+          properties:
+            appointment_id:
+              type: integer
+              example: 1
+              description: ID of the appointment to end
+            patient_id:
+              type: integer
+              example: 1
+              description: ID of the patient
+            diagnosis:
+              type: string
+              example: "Influenza"
+              description: Doctor's diagnosis
+            medicine:
+              type: array
+              items:
+                type: string
+              example: ["Antibiotics", "Antihistamines"]
+              description: List of prescribed medications
+    responses:
+      200:
+        description: Appointment ended successfully
+        schema:
+          properties:
+            code:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: Appointment ended successfully
+            data:
+              properties:
+                appointment_id:
+                  type: integer
+                  example: 1
+                diagnosis:
+                  type: string
+                  example: "Influenza"
+                end_time:
+                  type: string
+                  format: date-time
+                  example: "2025-04-07T14:30:00+08:00"
+                prescription_id:
+                  type: integer
+                  example: 101
+      400:
+        description: Invalid input data
+      500:
+        description: Server error
     """
 
     print("\n\n")
@@ -694,6 +888,49 @@ def process_appointment_end():
 # AFTER APPOINTMENT
 @app.route("/process/calculate", methods=['POST'])
 def process_appointment_calculate():
+    """
+    Calculate payment for an appointment
+    ---
+    tags:
+      - Payments
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          id: calculate_payment
+          required:
+            - appointment_id
+          properties:
+            appointment_id:
+              type: integer
+              example: 1
+              description: ID of the appointment to calculate payment for
+    responses:
+      200:
+        description: Payment calculation completed successfully
+        schema:
+          properties:
+            code:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: Post-appointment (calculate) processing completed successfully
+            data:
+              properties:
+                payment_id:
+                  type: integer
+                  example: 501
+                payment_amount:
+                  type: number
+                  format: float
+                  example: 125.50
+      400:
+        description: Invalid input data
+      500:
+        description: Server error
+    """    
 
     if request.is_json:
         try:
@@ -827,6 +1064,77 @@ def process_appointment_calculate():
 
 @app.route("/process/finish", methods=['POST'])
 def process_appointment_finish():
+    """
+    Process appointment finish
+    ---
+    tags:
+      - Appointment Processing
+    summary: Finalizes an appointment by updating payment information
+    description: Updates payment status and links payment to appointment after successful payment processing
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - appointment_id
+              - payment_id
+              - payment_status
+            properties:
+              appointment_id:
+                type: string
+                description: ID of the appointment to update
+              payment_id:
+                type: string
+                description: ID of the processed payment
+              payment_status:
+                type: string
+                description: Status of the payment
+    responses:
+      200:
+        description: Post-appointment processing completed successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: integer
+                  example: 200
+                message:
+                  type: string
+                  example: Post-appointment (finish) processing completed successfully
+      400:
+        description: Invalid JSON input
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: integer
+                  example: 400
+                message:
+                  type: string
+                  example: Invalid JSON input
+      500:
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: integer
+                  example: 500
+                message:
+                  type: string
+                  example: Internal server error
+                error:
+                  type: string
+                  description: Error details
+    """    
 
     if request.is_json:
         try:
