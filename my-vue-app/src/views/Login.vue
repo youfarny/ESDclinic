@@ -1,85 +1,89 @@
 <!-- src/views/Login.vue -->
 <template>
-    <div class="page-container">
-      <div class="content-card login-card">
-        <h1 class="text-center text-2xl mb-6">SMUDOC Online Consultation</h1>
-          <div class="tabs">
-          <button 
-            :class="['tab', { 'active': activeTab === 'patient' }]" 
-            @click="activeTab = 'patient'"
-          >
-            Patient
-          </button>
-          <button 
-            :class="['tab', { 'active': activeTab === 'doctor' }]" 
-            @click="activeTab = 'doctor'"
-          >
-            Doctor
+  <div class="page-container">
+    <div class="content-card login-card">
+      <h1 class="text-center text-2xl mb-6">SMUDOC Online Consultation</h1>
+      
+      <div class="tabs">
+        <button 
+          :class="['tab', { 'active': activeTab === 'patient' }]" 
+          @click="activeTab = 'patient'"
+        >
+          Patient
         </button>
+        <button 
+          :class="['tab', { 'active': activeTab === 'doctor' }]" 
+          @click="activeTab = 'doctor'"
+        >
+          Doctor
+        </button>
+      </div>
+      
+      <form @submit.prevent="handleLogin" class="mt-6">
+        <div class="form-group">
+          <label for="username">Username/Email</label>
+          <input 
+            type="text" 
+            id="username" 
+            v-model="username" 
+            required 
+            placeholder="Enter your username"
+          />
         </div>
         
-        <form @submit.prevent="handleLogin" class="mt-6">
-          <div class="form-group">
-            <label for="username">Username/Email</label>
-            <input 
-              type="text" 
-              id="username" 
-              v-model="username" 
-              required 
-              placeholder="Enter your username"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input 
-              type="password" 
-              id="password" 
-              v-model="password" 
-              required 
-              placeholder="Enter your password"
-            />
-          </div>
-          
-          <button type="submit" class="login-button">Login</button>
-        </form>
-      </div>
-    </div>
-  </template>
-  
-  <script>
-  export default {
-    name: 'Login',
-    data() {
-      return {
-        activeTab: 'patient',
-        username: '',
-        password: ''
-      }
-    },
-    methods: {
-      handleLogin() {
-        // In a real app, you would validate credentials against your API
-        localStorage.setItem('userRole', this.activeTab)
-        localStorage.setItem('isAuthenticated', 'true')
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            v-model="password" 
+            required 
+            placeholder="Enter your password"
+          />
+        </div>
         
-        // Redirect based on user type
-        this.$router.push(`/${this.activeTab}`)
+        <button type="submit" class="login-button">Login</button>
+      </form>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'Login',
+  data() {
+    return {
+      activeTab: 'patient',
+      username: '',
+      password: ''
+    }
+  },
+  methods: {
+    handleLogin() {
+      // In a real app, validate credentials here
+      localStorage.setItem('userRole', this.activeTab)
+      localStorage.setItem('isAuthenticated', 'true')
+
+      // Redirect based on user type
+      if (this.activeTab === 'patient') {
+        this.$router.push('/patient/dashboard')
+      } else if (this.activeTab === 'doctor') {
+        this.$router.push('/doctor/dashboard')
       }
     }
   }
-  </script>
-  
-  <style scoped>
-  
-  .login-card {
-    width: 400px;
-    padding: 2rem;
-    background-color: #536b7b;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
- /* In your Login.vue component's scoped styles */
+}
+</script>
+
+<style scoped>
+.login-card {
+  width: 400px;
+  padding: 2rem;
+  background-color: #536b7b;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
 .tabs {
   display: flex;
   width: 100%;
@@ -104,7 +108,6 @@
   font-weight: 600;
 }
 
-/* Form styling */
 form {
   width: 100%;
 }
@@ -128,7 +131,7 @@ form {
   padding: 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 4px;
-  box-sizing: border-box; /* Important - ensures padding doesn't increase width */
+  box-sizing: border-box;
   background-color: #333333;
   color: white;
 }
@@ -150,14 +153,10 @@ form {
   background-color: #4338ca;
 }
 
-/* Add this to make title text centered and properly sized */
 h1 {
   color: white;
   margin-bottom: 1.5rem;
   text-align: center;
   width: 100%;
 }
-  </style>
-
-
-
+</style>
