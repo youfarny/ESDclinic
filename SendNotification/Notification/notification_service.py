@@ -3,6 +3,34 @@ import pika
 import json
 from twilio.rest import Client
 import threading
+from invokes import invoke_http
+import requests
+
+
+#Queue logic
+def create_appointment_and_get_queue_length(doctor_id, patient_contact,appointment_id):
+    queue_url = "http://116.15.73.191:5103/queue"  
+
+    # Prepare the data to send to the Queue service
+    data = {
+        "doctor_id": doctor_id,
+        "patient_contact": patient_contact,
+        "appointment_id": appointment_id
+    }
+
+    # Send the POST request to create a new appointment and get the queue length
+    response = requests.post(queue_url, json=data)
+
+    if response.status_code == 201:
+        # Successfully created the appointment and got the queue length
+        response_data = response.json()
+        queue_length = response_data.get("queue_length")
+        return queue_length
+    else:
+        # Handle error
+        print(f"Failed to create appointment: {response.text}")
+        return None
+
 
 app = Flask(__name__)
 
@@ -55,10 +83,15 @@ def callback(ch, method, properties, body):
     message_data = json.loads(body)
 
     # Extract message info
+    doctor_id = message_data.get('doctor_id')
     appointment_type = message_data.get('appointment_type')
-    patient_contact = message_data.get('patient_contact')
-    queue_length = message_data.get('queue_length', None)
+    appointment_id = message_data.get('appointment_id')
+    contact = message_data.get('patient_contact')
+    patient_contact = "+65" + contact
     payment_amount = message_data.get('payment_amount', None)
+
+    queue_length = create_appointment_and_get_queue_length(doctor_id, patient_contact,appointment_id)
+    
 
     # Craft the outgoing message
     message = craft_message(appointment_type, patient_contact, queue_length, payment_amount)

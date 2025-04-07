@@ -2,6 +2,7 @@ import pika
 import json
 from twilio.rest import Client
 
+
 # Twilio credentials
 TWILIO_ACCOUNT_SID = 'ACe92d9c480a20df1a8041c53f7ac1992a'
 TWILIO_AUTH_TOKEN = '1feee1b9abaf98512122a2fb10fdfd92'
