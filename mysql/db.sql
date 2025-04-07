@@ -60,10 +60,11 @@ INSERT INTO `appointment`.`appointment`
     (patient_id, patient_symptoms, notes, diagnosis, doctor_id, prescription_id, payment_id, start_time, end_time)
 VALUES 
     (1, '["Fever", "Headache"]', '[{"diagnosis": "Influenza (Flu)", "confidence": 90}, {"diagnosis": "Common Cold", "confidence": 85}]', 'Viral infection', 1, 1, 1, '2025-03-18 09:00:00', '2025-03-18 09:30:00'),
-    (2, '["Stomach pain"]', NULL, 'Food poisoning', 2, 2, 2, '2025-03-18 10:00:00', '2025-03-18 10:20:00'),
-    (3, '["Skin rash"]', NULL, 'Allergic reaction', 3, 3, 3, '2025-03-18 11:00:00', '2025-03-18 11:15:00'),
-    (4, '["Back pain"]', NULL, 'Muscle strain', 1, 4, 4, '2025-03-18 13:00:00', '2025-03-18 13:45:00'),
-    (5, '["Cough", "Sore throat"]', NULL, 'Common cold', 2, 5, 5, '2025-03-18 14:00:00', '2025-03-18 14:30:00');
+    (2, '["Stomach pain"]', NULL, NULL, 2, NULL, NULL, NULL, NULL),
+    (3, '["Skin rash"]', NULL, NULL, 3, NULL, NULL, NULL, NULL),
+    (4, '["Back pain"]', NULL, NULL, 1, NULL, NULL, NULL, NULL),
+    (5, '["Cough", "Sore throat"]', NULL, NULL, 2, NULL, NULL, NULL, NULL);
+
 
     
     
@@ -118,7 +119,8 @@ INSERT INTO `prescription`.`medicine` (indiv_medicine, cost) VALUES
 ('Painkillers', 6.00),
 ('Physiotherapy', 50.00),
 ('Cough syrup', 5.50),
-('Lozenges', 3.50);
+('Lozenges', 3.50),
+('Antibiotics', 10.00);
 
 
 DROP DATABASE IF EXISTS payment;

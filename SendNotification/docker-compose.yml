@@ -17,4 +17,4 @@ services:
     ports:
       - "5111:5111"
     volumes:
-      - ./notification_worker:/app/notification_worker
+      - ./notification:/app/notification_worker

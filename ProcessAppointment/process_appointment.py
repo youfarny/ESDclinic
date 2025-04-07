@@ -167,11 +167,14 @@ def process_appointment_new():
                     print("------------------------------STEP A1 & A2------------------------------")
                     print("\nAssigning doctor from shortest queue...")
                     queue_result = invoke_http(f"{queue_URL}/shortest", method='GET')
+                    print(queue_result)
                     
 
                     if "error" not in queue_result and queue_result.get("doctor_id"):
                         selected_doctor_id = queue_result["doctor_id"]
                         print(f"Assigned doctor_id with shortest queue: {selected_doctor_id}")
+                    elif (queue_result.get("error") == "No doctors in queue"):
+                        selected_doctor_id = 1
                     else:
                         return jsonify({"code": 500, "message": "Failed to assign doctor"}), 500
                     

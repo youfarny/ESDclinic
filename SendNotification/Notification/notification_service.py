@@ -9,6 +9,9 @@ import requests
 
 #Queue logic
 def create_appointment_and_get_queue_length(doctor_id, patient_contact,appointment_id):
+    print(doctor_id)
+    print(patient_contact)
+    print(appointment_id)
     queue_url = "http://116.15.73.191:5103/queue"  
 
     # Prepare the data to send to the Queue service
@@ -87,10 +90,10 @@ def callback(ch, method, properties, body):
     appointment_type = message_data.get('appointment_type')
     appointment_id = message_data.get('appointment_id')
     contact = message_data.get('patient_contact')
-    patient_contact = "+65" + contact
+    patient_contact = "+65" + str(contact)
     payment_amount = message_data.get('payment_amount', None)
 
-    queue_length = create_appointment_and_get_queue_length(doctor_id, patient_contact,appointment_id)
+    queue_length = create_appointment_and_get_queue_length(doctor_id, contact, appointment_id)
     
 
     # Craft the outgoing message
