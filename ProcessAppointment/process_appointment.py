@@ -62,15 +62,7 @@ notification_URL = f"http://{ip_address}:5672/send_notification"
 # BEFORE APPOINTMENT
 @app.route("/process/new", methods=['POST'])
 def process_appointment_new():
-    """
-    {
-        "apikey": "admin",
-        "patient_id": 1,
-        "request_doctor": "",
-        "patient_symptoms": ["Fever", "Headache"],
-        "patient_contact": 91234567
-    }
-    """
+
     """
     Create a new appointment
     ---
