@@ -1,4 +1,0 @@
-include:
-  - path: kong-postgresql/docker-compose.yml
-  - path: mysql/docker-compose.yml
-  - path: rabbitmq/docker-compose.yml

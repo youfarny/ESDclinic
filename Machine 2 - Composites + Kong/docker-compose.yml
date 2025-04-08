@@ -1,4 +1,0 @@
-include:
-  - path: kong/docker-compose.yml
-  - path: ProcessAppointment/docker-compose.yml
-  - path: SendNotification/docker-compose.yml
