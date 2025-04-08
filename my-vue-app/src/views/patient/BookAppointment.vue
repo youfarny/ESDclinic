@@ -1,260 +1,111 @@
-<!-- src/views/patient/BookAppointment.vue -->
 <template>
-  <div class="book-appointment-container">
-  <navigation-bar />
-  <div class="content">
-    <h1>Book an Appointment</h1>
-  
-  <div class="appointment-type-selector">
-  <div
-  :class="['appointment-type', { active: appointmentType === 'any' }]"
-  @click="appointmentType = 'any'"
-  >
-  <h3>Any Available Doctor</h3>
-  <p>Get the earliest available appointment with any doctor</p>
+  <div class="p-6 max-w-xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">Book an Appointment</h1>
+
+    <div class="space-y-4">
+      <!-- Doctor dropdown -->
+      <select
+        v-model="doctorId"
+        class="w-full p-2 border rounded"
+      >
+        <option disabled value="">Select a Doctor</option>
+        <option
+          v-for="doc in doctors"
+          :key="doc.id"
+          :value="doc.id"
+        >
+          {{ doc.id }} - {{ doc.name }}
+        </option>
+      </select>
+
+      <!-- Symptom input -->
+      <textarea
+        v-model="symptoms"
+        placeholder="Describe your symptoms"
+        class="w-full border p-2 rounded resize-y"
+      ></textarea>
+
+      <!-- Book button -->
+      <button
+        @click="bookAppointment"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        Book Appointment
+      </button>
+
+      <p v-if="message" class="text-green-600 mt-4">{{ message }}</p>
+      <p v-if="error" class="text-red-600 mt-4">{{ error }}</p>
+    </div>
   </div>
-  
-  <div
-  :class="['appointment-type', { active: appointmentType === 'previous' }]"
-  @click="appointmentType = 'previous'"
-  >
-  <h3>Previous Doctor</h3>
-  <p>Book with the same doctor as your last consultation</p>
-  </div>
-  
-  <div
-  :class="['appointment-type', { active: appointmentType === 'specific' }]"
-  @click="appointmentType = 'specific'"
-  >
-  <h3>Specific Doctor</h3>
-  <p>Choose a specific doctor for your consultation</p>
-  </div>
-  </div>
-  
-  <div v-if="appointmentType === 'specific'" class="doctor-selector">
-  <h3>Select a Doctor</h3>
-  <div class="doctors-list">
-  <div
-  v-for="doctor in doctors"
-  :key="doctor.id"
-  :class="['doctor-card', { selected: selectedDoctor === doctor.id }]"
-  @click="selectedDoctor = doctor.id"
-  >
-  <div class="doctor-avatar"></div>
-  <h4>{{ doctor.name }}</h4>
-  <p>{{ doctor.specialization }}</p>
-  </div>
-  </div>
-  </div>
-  
-  <div v-if="appointmentType === 'previous'" class="previous-doctor">
-  <h3>Your Previous Doctor</h3>
-  <div class="doctor-card selected">
-  <div class="doctor-avatar"></div>
-  <h4>{{ previousDoctor.name }}</h4>
-  <p>{{ previousDoctor.specialization }}</p>
-  </div>
-  </div>
-  
-  <div class="reason-section">
-  <h3>Reason for Consultation</h3>
-  <textarea
-  v-model="consultationReason"
-  placeholder="Please briefly describe your symptoms or reason for the consultation..."
-  rows="4"
-  ></textarea>
-  </div>
-  
-  <div class="action-buttons">
-  <button class="secondary-btn" @click="$router.push('/patient')">Cancel</button>
-  <button class="primary-btn" @click="submitAppointment">Book Appointment</button>
-  </div>
-  
-  <div v-if="showConfirmation" class="confirmation-message">
-  <h3>Appointment Confirmed!</h3>
-  <h4><p>Your queue number is: <strong>{{ queueNumber }}</strong></p>
-  <p>You will receive an SMS notification when your turn is approaching.</p></h4>
-  </div>
-  </div>
-  </div>
-  </template>
-  
-  <script>
-  import NavigationBar from '../../components/patient/NavigationBar.vue'
-  
-  export default {
-  name: 'BookAppointment',
-  components: {
-  NavigationBar
-  },
-  data() {
-  return {
-  appointmentType: 'any', // 'any', 'previous', or 'specific'
-  selectedDoctor: null,
-  consultationReason: '',
-  doctors: [
-  { id: 1, name: 'Dr. Sarah Chen', specialization: 'General Practitioner' },
-  { id: 2, name: 'Dr. Michael Wong', specialization: 'Pediatrician' },
-  { id: 3, name: 'Dr. David Kumar', specialization: 'Family Medicine' },
-  { id: 4, name: 'Dr. Emily Tan', specialization: 'Internal Medicine' }
-  ],
-  previousDoctor: { id: 2, name: 'Dr. Michael Wong', specialization: 'Pediatrician' },
-  showConfirmation: false,
-  queueNumber: 'A-127'
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+
+const doctorId = ref('');
+const symptoms = ref('');
+const doctors = ref([]);
+const message = ref('');
+const error = ref('');
+
+// Manually try to fetch doctor IDs 1–3
+onMounted(async () => {
+  const tempDoctors = [];
+
+  for (let id = 1; id <= 3; id++) {
+    try {
+      const res = await fetch(`http://localhost:8000/doctor/byid?doctor_id=${id}&apikey=admin`);
+    //   const res = await fetch(`https://personal-73tajzpf.outsystemscloud.com/Doctor_service/rest/DoctorAPI/doctor/byid?doctor_id=${id}`);
+      const data = await res.json();
+
+      // Check if the data is valid and doctor exists
+      if (data.Result.Success && data.Doctor.length > 0) {
+        tempDoctors.push({
+          id: data.Doctor[0].doctor_id,
+          name: data.Doctor[0].doctor_name,
+        });
+      } else {
+        console.error(`Failed to fetch doctor with ID: ${id}`);
+      }
+    } catch (e) {
+      console.error('Error fetching doctor details:', e);
+    }
   }
-  },
-  methods: {
-  submitAppointment() {
-  // In a real app, you would submit this to your backend
-  console.log('Appointment type:', this.appointmentType)
-  console.log('Doctor:', this.appointmentType === 'specific' ? this.selectedDoctor :
-  this.appointmentType === 'previous' ? this.previousDoctor.id : 'Any')
-  console.log('Reason:', this.consultationReason)
-  
-  // Simulate queue number generation
-  this.queueNumber = 'A-' + Math.floor(Math.random() * 900 + 100)
-  this.showConfirmation = true
-  
-  // Scroll to confirmation message
-  setTimeout(() => {
-  window.scrollTo({
-  top: document.body.scrollHeight,
-  behavior: 'smooth'
-  })
-  }, 100)
+
+  doctors.value = tempDoctors;
+});
+
+
+const bookAppointment = async () => {
+  const patient = JSON.parse(localStorage.getItem('patient'));
+  const patientId = patient?.patient_id;
+
+  if (!patientId) {
+    error.value = 'You must be logged in as a patient to book an appointment.';
+    return;
   }
+
+  try {
+    const res = await fetch('http://localhost:5100/appointment/new', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patient_id: patientId,
+        doctor_id: Number(doctorId.value),
+        patient_symptoms: { description: symptoms.value },
+      }),
+    });
+
+    if (!res.ok) throw new Error('Appointment creation failed');
+
+    const data = await res.json();
+    message.value = `Appointment created! ID: ${data.appointment_id}`;
+    doctorId.value = '';
+    symptoms.value = '';
+    error.value = '';
+  } catch (err) {
+    error.value = err.message;
+    message.value = '';
   }
-  }
-  </script>
-  
-  <style scoped>
-  .book-appointment-container {
-  min-height: 100vh;
-  background-color: #d1eef3;
-  }
-  
-  .content {
-  padding: 2rem;
-  max-width: 900px;
-  margin: 0 auto;
-  }
-  
-  .appointment-type-selector {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1rem;
-  margin: 2rem 0;
-  }
-  
-  .appointment-type {
-  background-color: #536b7b;
-  border-radius: 8px;
-  padding: 1.5rem;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-  }
-  
-  .appointment-type.active {
-  border-color: #4f46e5;
-  box-shadow: 0 4px 8px rgba(79, 70, 229, 0.2);
-  }
-  
-  .appointment-type h3 {
-  margin-bottom: 0.5rem;
-  color: #a0cbc5;
-  }
-  
-  .doctor-selector, .previous-doctor, .reason-section {
-  background-color: rgb(155, 123, 123);
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  }
-  
-  .doctors-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-  }
-  
-  .doctor-card {
-  border: 1px solid #607cb2;
-  border-radius: 8px;
-  padding: 1rem;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  }
-  
-  .doctor-card.selected {
-  border-color: #000000;
-  background-color: #382b2b;
-  }
-  
-  .doctor-avatar {
-  width: 60px;
-  height: 60px;
-  background-color: #414c61;
-  border-radius: 50%;
-  margin: 0 auto 0.75rem;
-  }
-  
-  .doctor-card h4 {
-  margin-bottom: 0.25rem;
-  }
-  
-  textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  resize: vertical;
-  font-family: inherit;
-  }
-  
-  .action-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  }
-  
-  .primary-btn, .secondary-btn {
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
-  }
-  
-  .primary-btn {
-  background-color: #4f46e5;
-  color: white;
-  border: none;
-  }
-  
-  .secondary-btn {
-  background-color: white;
-  color: #111827;
-  border: 1px solid #e5e7eb;
-  }
-  
-  .confirmation-message {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background-color: #ecfdf5;
-  border: 1px solid #10b981;
-  border-radius: 8px;
-  }
-  
-  .confirmation-message h3 {
-  color: #047857;
-  margin-bottom: 0.5rem;
-  }
-  
-  .confirmation-message h4 {
-  color: #517d71;
-  margin-bottom: 0.5rem;
-  }
-  </style>
+};
+</script>

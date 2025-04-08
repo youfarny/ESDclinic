@@ -1,5 +1,6 @@
 FROM python:3.9
 WORKDIR /app/payment
 COPY . /app/payment
+COPY .env ./
 RUN pip install -r /app/payment/requirements.txt
 CMD ["python", "Payment.py"]

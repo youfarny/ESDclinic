@@ -1,219 +1,144 @@
-<script setup>
-import { computed } from 'vue';
-import { useStore } from 'vuex';
-import { useRouter, useRoute } from 'vue-router';
-
-const store = useStore();
-const router = useRouter();
-const route = useRoute();
-
-const user = computed(() => store.getters.getUser);
-const isLoggedIn = computed(() => !!user.value);
-const userRole = computed(() => user.value?.role || localStorage.getItem('userRole') || '');
-
-function logout() {
-  store.dispatch('logout');
-  localStorage.removeItem('userRole');
-  router.push('/');
-}
-
-const isActive = (path) => {
-  return route.path === path || route.path.startsWith(`${path}/`);
-};
-</script>
-
-<template>
-  <div id="app" class="d-flex flex-column align-items-center bg-light min-vh-100">
-    <div class="w-100" style="max-width: 430px;">
-      <!-- Navigation -->
-      <nav v-if="isLoggedIn" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm px-3 py-2">
-        <div class="container-fluid">
-          <span class="navbar-brand text-primary fw-bold">SMUDOC</span>
-
-          <div class="d-flex gap-3 align-items-center">
-            <template v-if="userRole === 'patient'">
-              <router-link to="/patient" class="nav-link" :class="{ active: isActive('/patient') && route.path === '/patient' }">
-                Dashboard
-              </router-link>
-              <router-link to="/patient/book-appointment" class="nav-link" :class="{ active: isActive('/patient/book-appointment') }">
-                Book
-              </router-link>
-              <router-link to="/patient/appointments" class="nav-link" :class="{ active: isActive('/patient/appointments') }">
-                My Appt
-              </router-link>
-              <router-link to="/patient/medical-records" class="nav-link" :class="{ active: isActive('/patient/medical-records') }">
-                Records
-              </router-link>
-              <router-link to="/patient/about" class="nav-link" :class="{ active: isActive('/patient/about') }">
-                About
-              </router-link>
-            </template>
-
-            <template v-else-if="userRole === 'doctor'">
-              <router-link to="/doctor" class="nav-link" :class="{ active: isActive('/doctor') && route.path === '/doctor' }">
-                Dashboard
-              </router-link>
-              <router-link to="/doctor/consultation" class="nav-link" :class="{ active: isActive('/doctor/consultation') }">
-                Consultation
-              </router-link>
-            </template>
-
-            <!-- Uncomment if needed
-            <template v-else-if="userRole === 'pharmacist'">
-              ...
-            </template>
-            -->
-
-            <button class="btn btn-danger btn-sm ms-3" @click="logout">Logout</button>
-          </div>
-        </div>
-      </nav>
-
-      <!-- Page content -->
-      <main class="p-3">
-        <router-view />
-      </main>
-    </div>
-  </div>
-</template>
-
-<style scoped>
-.nav-link {
-  color: #6c757d;
-  transition: all 0.3s ease;
-}
-.nav-link.active {
-  font-weight: bold;
-  color: #0d6efd !important;
-  border-bottom: 2px solid #0d6efd;
-}
-</style>
-
-
-
-<!-- <script setup>
-import { computed } from 'vue';
-import { useStore } from 'vuex';
-import { useRouter, useRoute } from 'vue-router';
-
-const store = useStore();
-const router = useRouter();
-const route = useRoute();
-
-const user = computed(() => store.getters.getUser);
-const isLoggedIn = computed(() => !!user.value);
-const userRole = computed(() => user.value?.role || localStorage.getItem('userRole') || '');
-
-function logout() {
-  store.dispatch('logout');
-  localStorage.removeItem('userRole');
-  router.push('/');
-}
-
-// Check if a route is active or not
-const isActive = (path) => {
-  return route.path === path || route.path.startsWith(`${path}/`);
-};
-</script>
-
 <template>
   <div id="app">
-
-    <nav v-if="isLoggedIn" class="navigation-bar">
-      <div class="logo">SMUDOC</div>
-      
-      <div v-if="userRole === 'patient'" class="nav-links">
-        <router-link to="/patient" class="nav-link" :class="{ active: isActive('/patient') && route.path === '/patient' }">
-          Dashboard
-        </router-link>
-        <router-link to="/patient/book-appointment" class="nav-link" :class="{ active: isActive('/patient/book-appointment') }">
-          Book Appointment
-        </router-link>
-        <router-link to="/patient/appointments" class="nav-link" :class="{ active: isActive('/patient/appointments') }">
-          My Appointments
-        </router-link>
-        <router-link to="/patient/medical-records" class="nav-link" :class="{ active: isActive('/patient/medical-records') }">
-          Medical Records
-        </router-link>
-        <router-link to="/patient/about" class="nav-link" :class="{ active: isActive('/patient/about') }">
-          About
-        </router-link>
+    <!-- Navigation Bar -->
+    <nav v-if="isLoggedIn" class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container">
+        <router-link to="/doctor" class="navbar-brand">ESD Clinic</router-link>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <router-link to="/doctor" class="nav-link" :class="{ active: $route.path === '/doctor' }">
+                Dashboard
+              </router-link>
+            </li>
+            <li class="nav-item">
+              <router-link to="/doctor/appointments" class="nav-link" :class="{ active: $route.path === '/doctor/appointments' }">
+                Appointments
+              </router-link>
+            </li>
+            <li class="nav-item">
+              <router-link to="/doctor/records" class="nav-link" :class="{ active: $route.path === '/doctor/records' }">
+                Records
+              </router-link>
+            </li>
+          </ul>
+          <div class="d-flex">
+            <span class="navbar-text me-3">
+              Welcome, Dr. {{ user?.name }}
+            </span>
+            <button @click="logout" class="btn btn-outline-danger">Logout</button>
+          </div>
+        </div>
       </div>
-      
-      <div v-else-if="userRole === 'doctor'" class="nav-links">
-        <router-link to="/doctor" class="nav-link" :class="{ active: isActive('/doctor') && route.path === '/doctor' }">
-          Dashboard
-        </router-link>
-        <router-link to="/doctor/consultation" class="nav-link" :class="{ active: isActive('/doctor/consultation') }">
-          Consultation
-        </router-link>
-      </div>
-      
-  
-      
-      <button @click="logout" class="logout-btn">Logout</button>
     </nav>
 
-    <router-view></router-view>
+    <!-- Loading Spinner -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div v-if="error" class="toast-container position-fixed top-0 end-0 p-3">
+      <div class="toast show" role="alert">
+        <div class="toast-header">
+          <strong class="me-auto">Error</strong>
+          <button type="button" class="btn-close" @click="clearError"></button>
+        </div>
+        <div class="toast-body">
+          {{ error }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mt-4">
+      <transition name="fade" mode="out-in">
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </transition>
+    </main>
   </div>
 </template>
 
-<style scoped>
-#app {
-  font-family: Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+<script setup>
+import { computed } from 'vue'
+import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
+
+const store = useStore()
+const router = useRouter()
+
+const user = computed(() => store.getters.getUser)
+const isLoggedIn = computed(() => !!user.value)
+const isLoading = computed(() => store.getters.isLoading)
+const error = computed(() => store.getters.getError)
+
+function logout() {
+  store.dispatch('logout')
+  router.push('/')
 }
 
-.navigation-bar {
+function clearError() {
+  store.commit('SET_ERROR', null)
+}
+</script>
+
+<style>
+#app {
+  min-height: 100vh;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
   align-items: center;
-  padding: 1rem 2rem;
-  background-color: white;
+  z-index: 1000;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.navbar {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.logo {
-  font-size: 1.5rem;
+.navbar-brand {
   font-weight: bold;
-  color: #4f46e5;
-}
-
-.nav-links {
-  display: flex;
-  gap: 1.5rem;
+  color: #0d6efd;
 }
 
 .nav-link {
-  text-decoration: none;
-  color: #4b5563;
-  padding: 0.5rem 0;
-  transition: color 0.3s ease, border-bottom 0.3s ease;
-  border-bottom: 2px solid transparent;
-}
-
-.nav-link:hover {
-  color: #4f46e5;
+  font-weight: 500;
 }
 
 .nav-link.active {
-  color: #4f46e5;
-  font-weight: bold;
-  border-bottom: 2px solid #4f46e5;
+  color: #0d6efd !important;
 }
 
-.logout-btn {
-  background-color: #ef4444;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+main {
+  flex: 1;
 }
-
-.logout-btn:hover {
-  background-color: #dc2626;
-}
-</style> -->
+</style> 

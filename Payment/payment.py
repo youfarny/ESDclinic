@@ -1,8 +1,15 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flasgger import Swagger
+from dotenv import load_dotenv
+from flask_cors import CORS
+
+import os
+import stripe
+
 
 app = Flask(__name__)
+CORS(app, origins=["http://localhost:5173"])
 
 # Database Config
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ESD213password!@116.15.73.191:3306/payment'
@@ -193,6 +200,98 @@ def delete_payment(payment_id):
         return jsonify({"message": "Payment deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+load_dotenv()  # this loads from .env
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
+@app.route("/payment/verify", methods=['POST'])
+def verify_stripe_payment():
+    """
+    Verify Stripe session and mark payment as paid
+    ---
+    tags:
+      - Payment
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            appointment_id:
+              type: integer
+            session_id:
+              type: string
+    responses:
+      200:
+        description: Payment verified and updated
+      400:
+        description: Invalid session or payment not found
+      500:
+        description: Stripe or DB error
+    """
+    data = request.get_json()
+    appointment_id = data.get("appointment_id")
+    session_id = data.get("session_id")
+
+    if not appointment_id or not session_id:
+        return jsonify({"error": "Missing appointment_id or session_id"}), 400
+
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+
+        if session['payment_status'] != 'paid':
+            return jsonify({"error": "Payment not completed"}), 400
+
+        # Find the payment record
+        payment = Payment.query.filter_by(appointment_id=appointment_id).first()
+        if not payment:
+            return jsonify({"error": "Payment record not found for this appointment"}), 404
+
+        payment.payment_status = True
+        db.session.commit()
+
+        return jsonify({"message": "Payment verified and marked as paid"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/payment/appointment/<int:appointment_id>', methods=['GET'])
+def get_payment_by_appointment(appointment_id):
+    """
+    Retrieve payment info for a given appointment_id
+    ---
+    tags:
+      - Payment
+    parameters:
+      - name: appointment_id
+        in: path
+        required: true
+        description: The appointment ID to get payment details for
+        type: integer
+    responses:
+      200:
+        description: Payment data retrieved
+        schema:
+          type: object
+          properties:
+            payment_id:
+              type: integer
+            appointment_id:
+              type: integer
+            payment_amount:
+              type: number
+              format: float
+            payment_status:
+              type: boolean
+      404:
+        description: Payment record not found
+    """
+    payment = Payment.query.filter_by(appointment_id=appointment_id).first()
+    if not payment:
+        return jsonify({"error": "Payment record not found"}), 404
+    return jsonify(payment.json()), 200
 
 
 if __name__ == "__main__":
