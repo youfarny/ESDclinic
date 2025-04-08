@@ -86,7 +86,8 @@ const bookAppointment = async () => {
   }
 
   try {
-    const res = await fetch('http://localhost:5100/appointment/new', {
+    const res = await fetch('http://localhost:8100/appointment/new', {
+      // https://127.0.0.1:8000/appointment/1?apikey=admin
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

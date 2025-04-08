@@ -160,7 +160,7 @@ const handleLogin = async () => {
 
 const authenticatePatient = async (patient_id, patient_password) => {
   try {
-    const res = await fetch(`http://localhost:8000/patient/authenticate?patient_id=${patient_id}&patient_password=${patient_password}&apikey=admin`, {
+    const res = await fetch(`http://localhost:8000/patient/authenticate/${patient_id}&${patient_password}`, {
       method: 'GET',  // Use 'GET' for sending query parameters
       headers: {
         'Content-Type': 'application/json'
