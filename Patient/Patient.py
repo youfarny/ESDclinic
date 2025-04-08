@@ -78,7 +78,7 @@ def authenticate_patient(patient_id, patient_password):
     if not patient:
         return jsonify({"error": "Invalid credentials"}), 401
     
-    return jsonify({"patient_id": patient.patient_id, "patient_name": patient.patient_name, "patient_age": patient.patient_age}), 200
+    return jsonify({"patient_id": patient.patient_id, "patient_name": patient.patient_name}), 200
 
 @app.route("/patient/<int:patient_id>", methods=['GET'])
 def get_patient(patient_id):
@@ -161,7 +161,7 @@ def get_patient_allergies(patient_id):
     if not patient:
         return jsonify({"error": "Patient not found"}), 404
 
-    return jsonify({"patient_id": patient.patient_id, "allergies": patient.patient_allergies}), 200
+    return jsonify({"patient_id": patient.patient_id, "allergies": patient.patient_allergies, "patient_age": patient.patient_age}), 200
 
 @app.route("/patient/contact/<int:patient_id>", methods=['GET'])
 def get_patient_contact(patient_id):
