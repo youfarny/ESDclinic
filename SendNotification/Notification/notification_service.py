@@ -4,14 +4,17 @@ import json
 from twilio.rest import Client
 import threading
 import requests
+from invokes import invoke_http
 
+queue_url = "http://116.15.73.191:5103/queue"
 
 #Queue logic
 def create_appointment_and_get_queue_length(doctor_id, patient_contact,appointment_id):
+    global queue_url
     print(doctor_id)
     print(patient_contact)
     print(appointment_id)
-    queue_url = "http://116.15.73.191:5103/queue"  
+    
 
     # Prepare the data to send to the Queue service
     data = {
@@ -31,6 +34,28 @@ def create_appointment_and_get_queue_length(doctor_id, patient_contact,appointme
     else:
         # Handle error
         print(f"Failed to create appointment: {response.text}")
+        return None
+    
+def get_queue_next(doctor_id):
+    global queue_url
+    print(doctor_id)
+
+    # Prepare the data to send to the Queue service
+    data = {
+        "doctor_id": doctor_id
+    }
+
+    response = requests.get(f"{queue_url}/next/{doctor_id}", json=data)
+
+    if response.status_code == 201:
+        # Successfully read the appointment and got the queue length
+        response_data = response.json()
+        appointment_id = response_data.get("appointment_id")
+        patient_contact = response_data.get("patient_contact")
+        return appointment_id, patient_contact
+    else:
+        # Handle error
+        print(f"Failed to read queue: {response.text}")
         return None
 
 
@@ -63,16 +88,16 @@ channel.exchange_declare(exchange='esd_clinic', exchange_type='topic', durable=T
 
 def craft_message(appointment_type, queue_length=None, zoom_link=None):
     if appointment_type == 'before':
-        # Craft the message for before the appointment
+        # Scenario 1
         message = f"Dear Patient, your appointment is coming up soon! Estimated wait time: {queue_length} patients ahead. Please be ready."
     
     elif appointment_type == 'during':
-        # Craft the message for patient to come in the room now, with zoom link
-        message = "Dear Patient, you are next in line. Please get ready and await the zoom link that will be sent shortly."
+        # Scenario 2a
+        message = f"Thank you for waiting. Your doctor is available to see you now, please enter the virtual meeting room via this link: {zoom_link}."
 
     elif appointment_type == 'next':
-        # Craft the message for patient next in line
-        message = f"Thank you for waiting. Your doctor is available to see you now, please enter the virtual meeting room via this link: {zoom_link}."    
+        # Scenario 2b
+        message = "Dear Patient, you are next in line. Please get ready and await the zoom link that will be sent shortly."    
     
     else:
         message = "Invalid appointment type."
@@ -83,44 +108,76 @@ def craft_message(appointment_type, queue_length=None, zoom_link=None):
 def callback(ch, method, properties, body):
     # Decode the message
     message_data = json.loads(body)
-
-    # Extract message info
-    doctor_id = message_data.get('doctor_id')
+    print(message_data, flush=True)
     appointment_type = message_data.get('appointment_type')
-    appointment_id = message_data.get('appointment_id')
-    contact = message_data.get('patient_contact')
-    patient_contact = "+65" + str(contact)
-    zoom_link = message_data.get('zoom_link', None)
 
     if appointment_type == 'before':
+
+        # Extract message info
+        doctor_id = message_data.get('doctor_id')
+        
+        appointment_id = message_data.get('appointment_id')
+        contact = message_data.get('patient_contact')
+        patient_contact = "+65" + str(contact)
+        zoom_link = message_data.get('zoom_link', None)
+
+        
         queue_length = create_appointment_and_get_queue_length(doctor_id, contact, appointment_id)
+        
+
+        # Craft the outgoing message
+        message = craft_message(appointment_type, queue_length, zoom_link)
+
+        # Send the message via Twilio
+        try:
+            msg = client.messages.create(
+                body=message,
+                from_=TWILIO_PHONE_NUMBER,
+                to=patient_contact
+            )
+            print(f"Message sent to {patient_contact}: {msg.sid}")
+            # You can use this if you want to return it as part of the response:
+            response_payload = {
+                "queue_length": queue_length,
+                "message_sid": msg.sid,
+                "status": "sent"
+            }
+
+        except Exception as e:
+            print(f"Failed to send message to {patient_contact}: {e}")
+            response_payload = {
+                "error": str(e),
+                "status": "failed"
+            }
     
+    elif appointment_type == "next":
+        doctor_id = message_data.get('doctor_id')
 
+        appointment_id, patient_contact = get_queue_next(doctor_id)
+        message = craft_message(appointment_type, queue_length, zoom_link)
 
-    # Craft the outgoing message
-    message = craft_message(appointment_type, patient_contact, queue_length, zoom_link)
+        try:
+            msg = client.messages.create(
+                body=message,
+                from_=TWILIO_PHONE_NUMBER,
+                to=patient_contact
+            )
+            print(f"Message sent to {patient_contact}: {msg.sid}")
+            # You can use this if you want to return it as part of the response:
+            response_payload = {
+                "appointment_id": appointment_id,
+                "patient_contact": patient_contact,
+                "message_sid": msg.sid,
+                "status": "sent"
+            }
 
-    # Send the message via Twilio
-    try:
-        msg = client.messages.create(
-            body=message,
-            from_=TWILIO_PHONE_NUMBER,
-            to=patient_contact
-        )
-        print(f"Message sent to {patient_contact}: {msg.sid}")
-        # You can use this if you want to return it as part of the response:
-        response_payload = {
-            "queue_length": queue_length or 3,  # Replace with real logic if needed
-            "message_sid": msg.sid,
-            "status": "sent"
-        }
+        except Exception as e:
+            print(f"Failed to send message to {patient_contact}: {e}")
+            response_payload = {
+                "error": str(e),
+                "status": "failed"
+            }
 
-    except Exception as e:
-        print(f"Failed to send message to {patient_contact}: {e}")
-        response_payload = {
-            "error": str(e),
-            "status": "failed"
-        }
 
     # Send response if reply_to and correlation_id are set
     if properties.reply_to and properties.correlation_id:
