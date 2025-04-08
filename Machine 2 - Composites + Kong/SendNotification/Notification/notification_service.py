@@ -193,6 +193,7 @@ def callback(ch, method, properties, body):
             ),
             body=json.dumps(response_payload)
         )
+        print(body)
         print(f"✔ Sent response back to {properties.reply_to}")
 
     # Acknowledge the message
