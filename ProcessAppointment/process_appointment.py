@@ -987,6 +987,9 @@ def process_appointment_calculate():
         description: Server error
     """    
 
+    print("\n\n")
+    print("!!!------------------------------NEW REQUEST TO /process/calculate------------------------------!!!")
+
     if request.is_json:
         try:
             # Extract data from the request
@@ -1194,6 +1197,9 @@ def process_appointment_finish():
                   type: string
                   description: Error details
     """    
+
+    print("\n\n")
+    print("!!!------------------------------NEW REQUEST TO /process/finish------------------------------!!!")
 
     if request.is_json:
         try:
