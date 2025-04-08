@@ -27,6 +27,7 @@ class Patient(db.Model):
     patient_address = db.Column(db.String(200), nullable=False)
     patient_insurance = db.Column(db.Boolean, default=False)
     patient_allergies = db.Column(db.JSON, nullable=True)
+    patient_age = db.Column(db.Integer, nullable=False)
 
     def json(self):
         return {
@@ -35,7 +36,8 @@ class Patient(db.Model):
             "patient_insurance": self.patient_insurance,
             "patient_name": self.patient_name,
             "patient_address": self.patient_address,
-            "patient_allergies": self.patient_allergies
+            "patient_allergies": self.patient_allergies,
+            "patient_age": self.patient_age
         }
 
 with app.app_context():
@@ -76,7 +78,56 @@ def authenticate_patient(patient_id, patient_password):
     if not patient:
         return jsonify({"error": "Invalid credentials"}), 401
     
-    return jsonify({"patient_id": patient.patient_id, "patient_name": patient.patient_name}), 200
+    return jsonify({"patient_id": patient.patient_id, "patient_name": patient.patient_name, "patient_age": patient.patient_age}), 200
+
+@app.route("/patient/<int:patient_id>", methods=['GET'])
+def get_patient(patient_id):
+    """
+    Get a patient's allergy information
+    ---
+    tags:
+      - Patient
+    parameters:
+      - name: patient_id
+        in: path
+        required: true
+        description: The patient's unique ID
+        schema:
+          type: integer
+          example: 123
+    responses:
+      200:
+        description: A list of the patient's allergies
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                patient_id:
+                  type: integer
+                  example: 123
+                allergies:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Peanuts", "Shellfish"]
+      404:
+        description: Patient not found
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                error:
+                  type: string
+                  example: Patient not found
+    """
+    patient = Patient.query.get(patient_id)
+    if not patient:
+        return jsonify({"error": "Patient not found"}), 404
+
+    return jsonify(patient.json()), 200
+
 
 @app.route("/patient/allergies/<int:patient_id>", methods=['GET'])
 def get_patient_allergies(patient_id):
@@ -304,6 +355,8 @@ def update_patient(patient_id):
         patient.patient_password = data["patient_password"]
     if "patient_allergies" in data:
         patient.patient_allergies = data["patient_allergies"]
+    if "patient_age" in data:
+        patient.patient_age = data["patient_age"]
 
     try:
         db.session.commit()

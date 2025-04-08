@@ -525,6 +525,7 @@ def process_appointment_start():
         if allergies_response.status_code == 200 and allergies_response.text.strip():
             allergies_data = allergies_response.json()
             patient_allergies = allergies_data.get("allergies", ["No known allergies"])
+            patient_age = allergies_data.get("patient_allergies")
         else:
             patient_allergies = []
 
@@ -546,7 +547,7 @@ def process_appointment_start():
 
         response = client.models.generate_content(
             model="gemini-2.0-flash",
-            contents=f"You are a diagnosis recommender for a project. You will receive a list of symptoms and return 5 possible diagnoses with your confidence level from 0 to 100% in descending order. Return your results in json format and nothing else. There are the symptoms: {patient_symptoms} "
+            contents=f"You are a diagnosis recommender for a project. You will receive a list of symptoms and return 5 possible diagnoses with your confidence level from 0 to 100% in descending order. Return your results in json format and nothing else. The patient is {patient_age} years old. There are the symptoms: {patient_symptoms} "
         )
 
         # print(response.text)
