@@ -140,7 +140,7 @@ def get_next_start(doctor_id):
     if not next_patient:
         return jsonify({"error": "No patients in queue"}), 404
 
-    return jsonify({"doctor_id": next_patient.doctor_id, "appointment_id": next_patient.appointment_id}), 200
+    return jsonify({"doctor_id": next_patient.doctor_id, "appointment_id": next_patient.appointment_id, "patient_contact": next_patient.patient_contact}), 200
 
 
 # @app.route("/queue/next_end/<int:doctor_id>", methods=['GET'])

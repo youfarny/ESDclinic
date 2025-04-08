@@ -135,6 +135,9 @@ def process_appointment_new():
     # patient_id, request_doctor, patient_symptoms, patient_contact
 
     print("\n\n")
+    print("!!!------------------------------NEW REQUEST TO /process/new------------------------------!!!")
+
+    print("\n\n")
     print("------------------------------STEP 3------------------------------")
     if request.is_json:
         try:
@@ -723,6 +726,48 @@ def process_appointment_end():
         print("\n\n")
         print("------------------------------STEP 14------------------------------")
 
+        appointment_response = requests.get(f"{appointment_URL}/{appointment_id}")
+        print(f"Appointment API (doctor_id fetch) Response Status: {appointment_response.status_code}")
+        print(f"Appointment API (doctor_id fetch) Response Content: {appointment_response.text}")
+
+        appointment_data = appointment_response.json()
+        doctor_id = appointment_data.get("doctor_id")
+
+
+
+        notification_data = {
+            "notification_type": "appointment_finish",
+            "doctor_id": doctor_id,
+            "appointment_type": "next"
+        }
+
+        print(notification_data, flush=True)
+
+        exchange_name = 'esd_clinic'
+
+        credentials = pika.PlainCredentials('admin', 'ESD213password!')
+        parameters = pika.ConnectionParameters(host=ip_address, credentials=credentials)
+
+        # Establish connection and channel
+        connection = pika.BlockingConnection(parameters)
+        channel = connection.channel()
+
+        channel.exchange_declare(exchange=exchange_name, exchange_type='topic', durable=True)
+
+        # Publish the message (no reply_to or correlation_id)
+        channel.basic_publish(
+            exchange=exchange_name,
+            routing_key="notification",
+            body=json.dumps(notification_data),
+            properties=pika.BasicProperties(
+                delivery_mode=2,  # Make message persistent
+                content_type='application/json'
+            )
+        )
+
+        print("Notification sent.", flush=True)
+
+        connection.close()
 
 
 
