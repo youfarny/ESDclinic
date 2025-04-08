@@ -46,8 +46,9 @@ def get_queue_next(doctor_id):
     }
 
     response = requests.get(f"{queue_url}/next/{doctor_id}", json=data)
+    print(response)
 
-    if response.status_code == 201:
+    if response.status_code == 200:
         # Successfully read the appointment and got the queue length
         response_data = response.json()
         appointment_id = response_data.get("appointment_id")
@@ -154,7 +155,9 @@ def callback(ch, method, properties, body):
         doctor_id = message_data.get('doctor_id')
 
         appointment_id, patient_contact = get_queue_next(doctor_id)
-        message = craft_message(appointment_type, queue_length, zoom_link)
+        message = craft_message(appointment_type)
+
+        patient_contact = "+65" + str(patient_contact)
 
         try:
             msg = client.messages.create(
