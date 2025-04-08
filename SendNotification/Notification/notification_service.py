@@ -3,7 +3,6 @@ import pika
 import json
 from twilio.rest import Client
 import threading
-from invokes import invoke_http
 import requests
 
 
@@ -62,18 +61,18 @@ channel.queue_declare(queue='notification_queue', durable=True)
 # Declare the exchange (type can be 'direct', 'topic', etc. — adjust as needed)
 channel.exchange_declare(exchange='esd_clinic', exchange_type='topic', durable=True)
 
-def craft_message(appointment_type, patient_contact, queue_length=None, payment_amount=None):
+def craft_message(appointment_type, queue_length=None, zoom_link=None):
     if appointment_type == 'before':
         # Craft the message for before the appointment
         message = f"Dear Patient, your appointment is coming up soon! Estimated wait time: {queue_length} patients ahead. Please be ready."
     
     elif appointment_type == 'during':
-        # Craft the message for during the appointment
-        message = "Thank you for waiting. Your doctor is available to see you now, please enter the virtual meeting room via our application."
-    
-    elif appointment_type == 'after':
-        # Craft the message for after the appointment
-        message = f"Thank you for visiting! Your total payment is {payment_amount} USD. Please settle it at your earliest convenience."
+        # Craft the message for patient to come in the room now, with zoom link
+        message = "Dear Patient, you are next in line. Please get ready and await the zoom link that will be sent shortly."
+
+    elif appointment_type == 'next':
+        # Craft the message for patient next in line
+        message = f"Thank you for waiting. Your doctor is available to see you now, please enter the virtual meeting room via this link: {zoom_link}."    
     
     else:
         message = "Invalid appointment type."
@@ -91,13 +90,15 @@ def callback(ch, method, properties, body):
     appointment_id = message_data.get('appointment_id')
     contact = message_data.get('patient_contact')
     patient_contact = "+65" + str(contact)
-    payment_amount = message_data.get('payment_amount', None)
+    zoom_link = message_data.get('zoom_link', None)
 
-    queue_length = create_appointment_and_get_queue_length(doctor_id, contact, appointment_id)
+    if appointment_type == 'before':
+        queue_length = create_appointment_and_get_queue_length(doctor_id, contact, appointment_id)
     
 
+
     # Craft the outgoing message
-    message = craft_message(appointment_type, patient_contact, queue_length, payment_amount)
+    message = craft_message(appointment_type, patient_contact, queue_length, zoom_link)
 
     # Send the message via Twilio
     try:
