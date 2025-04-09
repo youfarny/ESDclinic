@@ -115,23 +115,33 @@ def callback(ch, method, properties, body):
     appointment_type = message_data.get('appointment_type')
     print(appointment_type)
 
+    response_payload = {}  # Initialize an empty dict to store any response data we need
+
     if appointment_type == 'before':
+
+        print("\n\n")
+        print("------------------------------STEP 7------------------------------")
 
         # Extract message info
         doctor_id = message_data.get('doctor_id')
         
         appointment_id = message_data.get('appointment_id')
+        print(f"APPOINTMENT_ID: {appointment_id}")
         contact = message_data.get('patient_contact')
         patient_contact = "+65" + str(contact)
         zoom_link = message_data.get('zoom_link', None)
 
-        
+        print("\n\n")
+        print("------------------------------STEP 8 & 9------------------------------")
         queue_length = create_appointment_and_get_queue_length(doctor_id, contact, appointment_id)
-        
+        print(f"QUEUE_LENGTH: {queue_length}")
 
         # Craft the outgoing message
         message = craft_message(appointment_type, queue_length, zoom_link)
+        print(f"MESSAGE: {message}")
 
+        print("\n\n")
+        print("------------------------------STEP 10------------------------------")
         # Send the message via Twilio
         try:
             msg = client.messages.create(
@@ -140,7 +150,6 @@ def callback(ch, method, properties, body):
                 to=patient_contact
             )
             print(f"Message sent to {patient_contact}: {msg.sid}")
-            # You can use this if you want to return it as part of the response:
             response_payload = {
                 "queue_length": queue_length,
                 "message_sid": msg.sid,
@@ -154,15 +163,42 @@ def callback(ch, method, properties, body):
                 "error": str(e),
                 "status": "failed"
             }
-    
-    elif appointment_type == "next":
-        doctor_id = message_data.get('doctor_id')
 
-        appointment_id, patient_contact = get_queue_next(doctor_id)
-        message = craft_message(appointment_type)
+        print("\n\n")
+        print("------------------------------STEP 11------------------------------")
+
+        # Only in the "before" case, we send response back via AMQP if reply_to and correlation_id are set.
+        if properties.reply_to and properties.correlation_id:
+            ch.basic_publish(
+                exchange='',
+                routing_key=properties.reply_to,
+                properties=pika.BasicProperties(
+                    correlation_id=properties.correlation_id,
+                    content_type='application/json'
+                ),
+                body=json.dumps(response_payload)
+            )
+            print(body)
+            print(f"✔ Sent response back to {properties.reply_to}")
+
+        # Acknowledge the message
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    elif appointment_type == "during":
+        print("\n\n")
+        print("------------------------------STEP 14------------------------------")
+        patient_contact = message_data.get('patient_contact')
+        print(f"NEXT PATIENT_CONTACT: {patient_contact}")
+
+        zoom_link = message_data.get('zoom_link')
+
+        message = craft_message(appointment_type, zoom_link=zoom_link)
+        print(f"MESSAGE: {message}")
 
         patient_contact = "+65" + str(patient_contact)
 
+        print("\n\n")
+        print("------------------------------STEP 15------------------------------")
         try:
             msg = client.messages.create(
                 body=message,
@@ -170,38 +206,46 @@ def callback(ch, method, properties, body):
                 to=patient_contact
             )
             print(f"Message sent to {patient_contact}: {msg.sid}")
-            # You can use this if you want to return it as part of the response:
-            response_payload = {
-                "appointment_id": appointment_id,
-                "patient_contact": patient_contact,
-                "message_sid": msg.sid,
-                "status": "sent"
-            }
 
         except Exception as e:
             print(f"Failed to send message to {patient_contact}: {e}")
-            response_payload = {
-                "error": str(e),
-                "status": "failed"
-            }
 
+        # No AMQP response is sent here, only acknowledge.
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+    
+    elif appointment_type == "next":
+        print("\n\n")
+        print("------------------------------STEP 25------------------------------")
+        doctor_id = message_data.get('doctor_id')
+        print(f"DOCTOR_ID: {doctor_id}")
 
-    # Send response if reply_to and correlation_id are set
-    if properties.reply_to and properties.correlation_id:
-        ch.basic_publish(
-            exchange='',
-            routing_key=properties.reply_to,
-            properties=pika.BasicProperties(
-                correlation_id=properties.correlation_id,
-                content_type='application/json'
-            ),
-            body=json.dumps(response_payload)
-        )
-        print(body)
-        print(f"✔ Sent response back to {properties.reply_to}")
+        print("\n\n")
+        print("------------------------------STEP 27 & 28------------------------------")
+        appointment_id, patient_contact = get_queue_next(doctor_id)
+        print(f"NEXT APPOINTMENT_ID: {appointment_id}")
+        print(f"NEXT PATIENT_CONTACT: {patient_contact}")
 
-    # Acknowledge the message
-    ch.basic_ack(delivery_tag=method.delivery_tag)
+        message = craft_message(appointment_type)
+        print(f"MESSAGE: {message}")
+
+        patient_contact = "+65" + str(patient_contact)
+
+        print("\n\n")
+        print("------------------------------STEP 29------------------------------")
+        try:
+            msg = client.messages.create(
+                body=message,
+                from_=TWILIO_PHONE_NUMBER,
+                to=patient_contact
+            )
+            print(f"Message sent to {patient_contact}: {msg.sid}")
+
+        except Exception as e:
+            print(f"Failed to send message to {patient_contact}: {e}")
+
+        # No AMQP response is sent here, only acknowledge.
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
 
 
 def start_consuming():
