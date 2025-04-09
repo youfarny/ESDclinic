@@ -12,7 +12,7 @@ from google import genai
 import json
 import pika
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["*"])
 from flasgger import Swagger
 # Initialize Swagger with configuration
 swagger_config = {
