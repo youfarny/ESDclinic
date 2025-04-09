@@ -6,3 +6,6 @@ kong/grafana-data/**
 grafana-data/
 kong/prometheus-data/**
 prometheus-data/
+venv
+rabbitmq/
+

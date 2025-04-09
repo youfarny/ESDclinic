@@ -160,7 +160,8 @@ const handleLogin = async () => {
 
 const authenticatePatient = async (patient_id, patient_password) => {
   try {
-    const res = await fetch(`http://localhost:8000/patient/authenticate/${patient_id}&${patient_password}`, {
+    const res = await fetch(`http://116.15.73.191:5102/patient/authenticate/${patient_id}&${patient_password}`, {
+    //const res = await fetch(`http://localhost:8000/patient/authenticate/${patient_id}&${patient_password}?apikey=admin`, {
       method: 'GET',  // Use 'GET' for sending query parameters
       headers: {
         'Content-Type': 'application/json'
@@ -171,7 +172,8 @@ const authenticatePatient = async (patient_id, patient_password) => {
 
     if (res.ok) {
       // Store patient details in local storage
-      localStorage.setItem('patient', JSON.stringify(data.patient));
+      localStorage.setItem('patient', JSON.stringify(data));
+      localStorage.setItem('userRole', 'patient');
       return true;
     } else {
       throw new Error('Authentication failed');

@@ -32,7 +32,7 @@ const routes = [
     meta: { requiresAuth: true, role: 'patient' }
   },
   {
-    path: '/patient/appointments',
+    path: '/patient/my-appointments',
     name: 'MyAppointments',
     component: MyAppointments,
     meta: { requiresAuth: true, role: 'patient' }
