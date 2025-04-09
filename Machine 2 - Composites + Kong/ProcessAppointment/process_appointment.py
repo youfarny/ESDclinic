@@ -463,6 +463,7 @@ def process_appointment_start():
             return jsonify({"code": 404, "message": "No appointments in queue"}), 404
 
         appointment_id = queue_data["appointment_id"]
+        patient_contact = queue_data["patient_contact"]
 
 
 
@@ -616,6 +617,7 @@ def process_appointment_start():
             "appointment_id": appointment_id,
             "patient_id": patient_id,
             "zoom_link": zoom_link,
+            "patient_contact": patient_contact,
             "appointment_type": "during"
         }
 
