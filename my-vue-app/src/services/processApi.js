@@ -31,11 +31,43 @@ processApiInstance.interceptors.response.use(
 )
 
 export const processApi = {
-    startAppointment: async (doctorId) => {
-        const response = await processApiInstance.post('/process/start', {
-          doctor_id: doctorId,
-        })
-        return response.data
-      }
-      
-}
+  startAppointment: async (doctorId) => {
+    try {
+      const response = await processApiInstance.post('/process/start', {
+        apikey: 'admin',
+        doctor_id: doctorId,
+      })
+      return response.data
+    } catch (error) {
+      console.error('Error starting appointment process:', error)
+      throw error
+    }
+  },
+
+  submitAppointment: async (data) => {
+    try {
+      const response = await processApiInstance.post('/process/end', {
+        apikey: 'admin',
+        ...data
+      })
+      return response.data
+    } catch (error) {
+      console.error('Error submitting appointment:', error)
+      throw error
+    }
+  },
+
+  endAppointment: async (data) => {
+    try {
+      const response = await processApiInstance.post('/process/end', {
+        apikey: 'admin',
+        ...data
+      })
+      return response.data
+    } catch (error) {
+      console.error('Error ending appointment:', error)
+      throw error
+    }
+  }
+  
+}   

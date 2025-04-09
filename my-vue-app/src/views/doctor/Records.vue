@@ -19,7 +19,8 @@
         <div class="flex justify-between items-start">
           <div>
             <h3 class="font-medium">Patient ID: {{ record.patient_id }}</h3>
-            <p class="text-gray-600">Appointment Date: {{ formatDate(record.date) }}</p>
+            <p class="text-gray-600">Start Time: {{ formatTime(a.start_time) }}</p>
+            <p class="text-gray-600">End Time: {{ formatTime(a.end_time) }}</p>
             <p class="text-gray-600">Diagnosis: {{ record.diagnosis }}</p>
             <p class="text-gray-600">Prescription: {{ record.prescription }}</p>
           </div>

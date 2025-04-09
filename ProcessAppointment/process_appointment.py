@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import sys
+import uuid
 from os import environ
 from datetime import datetime, timedelta, timezone
 from invokes import invoke_http
@@ -9,14 +10,47 @@ import requests
 from google import genai
 # import google.generativeai as genai
 import json
+import pika
 app = Flask(__name__)
 CORS(app, origins=["*"])
+from flasgger import Swagger
+# Initialize Swagger with configuration
+swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": "apispec_1",
+            "route": "/apispec_1.json",
+            "rule_filter": lambda rule: True,
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "static_url_path": "/flasgger_static",
+    "swagger_ui": True,
+    "specs_route": "/swagger/"
+}
+
+swagger_template = {
+    "swagger": "2.0",
+    "info": {
+        "title": "Clinic Process API",
+        "description": "API for managing clinic appointment processes",
+        "version": "1.0.0"
+    },
+    "basePath": "/",
+    "schemes": [
+        "http",
+        "https"
+    ],
+}
+
+swagger = Swagger(app, config=swagger_config, template=swagger_template)
 
 # Define service URLs
 
 
-ip_address = 'localhost'
-# ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
+# ip_address = 'localhost'
+ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
 
 appointment_URL = f"http://{ip_address}:5100/appointment"
 patient_URL = f"http://{ip_address}:5102/patient"
@@ -29,7 +63,82 @@ notification_URL = f"http://{ip_address}:5672/send_notification"
 @app.route("/process/new", methods=['POST'])
 def process_appointment_new():
 
-    # 3 Get recommended doctor using patient_id, request_doctor, patient_symptoms, patient_contact
+    """
+    Create a new appointment
+    ---
+    tags:
+      - Appointments
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          id: new_appointment
+          required:
+            - patient_id
+            - patient_contact
+          properties:
+            apikey:
+              type: string
+              example: admin
+              description: API key for authentication
+            patient_id:
+              type: integer
+              example: 1
+              description: ID of the patient
+            request_doctor:
+              type: string
+              example: ""
+              description: Optional specific doctor request, leave empty for shortest queue
+            patient_symptoms:
+              type: array
+              items:
+                type: string
+              example: ["Fever", "Headache"]
+              description: List of patient symptoms
+            patient_contact:
+              type: string
+              example: "+6597208453"
+              description: Patient contact number
+    responses:
+      200:
+        description: Appointment created successfully
+        schema:
+          properties:
+            code:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: Appointment created successfully
+            data:
+              properties:
+                appointment_id:
+                  type: integer
+                  example: 123
+                doctor_name:
+                  type: string
+                  example: Dr. Smith
+                doctor_id:
+                  type: integer
+                  example: 456
+                queue_length:
+                  type: integer
+                  example: 3
+      400:
+        description: Invalid input data
+      500:
+        description: Server error
+    """
+
+    # 3 Get recommended doctor using 
+    # patient_id, request_doctor, patient_symptoms, patient_contact
+
+    print("\n\n")
+    print("!!!------------------------------NEW REQUEST TO /process/new------------------------------!!!")
+
+    print("\n\n")
+    print("------------------------------STEP 3------------------------------")
     if request.is_json:
         try:
             appointment_data = request.get_json()
@@ -47,6 +156,11 @@ def process_appointment_new():
                 return jsonify({"code": 400, "message": "Missing patient contact information"}), 400
             
 
+
+
+
+
+
             if request_doctor=='' or request_doctor=='same':
 
                 # A1 If no doctor is requested, get shortest queue doctor
@@ -56,11 +170,14 @@ def process_appointment_new():
                     print("------------------------------STEP A1 & A2------------------------------")
                     print("\nAssigning doctor from shortest queue...")
                     queue_result = invoke_http(f"{queue_URL}/shortest", method='GET')
+                    print(queue_result)
                     
 
                     if "error" not in queue_result and queue_result.get("doctor_id"):
                         selected_doctor_id = queue_result["doctor_id"]
                         print(f"Assigned doctor_id with shortest queue: {selected_doctor_id}")
+                    elif (queue_result.get("error") == "No doctors in queue"):
+                        selected_doctor_id = 1
                     else:
                         return jsonify({"code": 500, "message": "Failed to assign doctor"}), 500
                     
@@ -120,6 +237,13 @@ def process_appointment_new():
                     return jsonify({"code": 400, "message": "Invalid doctor name provided"}), 400
 
         
+
+
+
+
+
+
+        
             # 5 Create a new appointment {patient_id, doctor_id, symptoms}
             # 6 Return new appointment {appointment_id}
            
@@ -144,14 +268,72 @@ def process_appointment_new():
             print("\n\n")
             print("------------------------------STEP 7------------------------------")
 
+            
             # Prepare the payload with required data
             notification_data = {
                 "notification_type": "appointment_confirmation",
                 "appointment_id": new_appointment_id, 
                 "doctor_id": selected_doctor_id,   
                 "doctor_name": doctor_name,     
-                "patient_contact": patient_contact 
+                "patient_contact": patient_contact,
+                "appointment_type": "before" 
             }
+
+
+            # AMQP connection parameters
+            exchange_name = 'esd_clinic'
+            queue_length = None
+            correlation_id = str(uuid.uuid4())
+         
+
+            print(notification_data)
+
+            credentials = pika.PlainCredentials('admin', 'ESD213password!')
+            parameters = pika.ConnectionParameters(host=ip_address, credentials=credentials)
+            
+            # Establish connection and channel
+            connection = pika.BlockingConnection(parameters)
+            channel = connection.channel()
+
+            channel.exchange_declare(exchange=exchange_name, exchange_type='topic', durable=True)
+            # Ensure the queue exists (durable = True for persistence)
+            result = channel.queue_declare(queue='', exclusive=True, auto_delete=True)
+            callback_queue = result.method.queue
+
+            def on_response(ch, method, props, body):
+                nonlocal queue_length
+                if props.correlation_id == correlation_id:
+                    response = json.loads(body)
+                    queue_length = response.get('queue_length')
+
+            channel.basic_consume(queue=callback_queue, on_message_callback=on_response, auto_ack=True)
+
+            # Publish the message with persistence and content-type
+            channel.basic_publish(
+                exchange='esd_clinic',
+                routing_key="notification",
+                body=json.dumps(notification_data),
+                properties=pika.BasicProperties(
+                    reply_to=callback_queue,
+                    correlation_id=correlation_id,
+                    delivery_mode=2,  # Make message persistent
+                    content_type='application/json'
+                )
+            )
+
+            # print(f"Notification for appointment {new_appointment_id} sent to '{queue_name}'.")
+
+            print(f"Waiting for queue_length response for appointment {new_appointment_id}...")
+
+            # Wait for the response
+            while queue_length is None:
+                connection.process_data_events(time_limit=1)
+
+            print(f"Queue length for appointment {new_appointment_id}: {queue_length}")
+
+            connection.close()
+
+            """
             # Send the POST request
             response = requests.post(notification_URL, json=notification_data)
 
@@ -163,7 +345,7 @@ def process_appointment_new():
                 print(f"Queue length for appointment {new_appointment_id}: {queue_length}")
             else:
                 print(f"Error in notification service: {response.status_code} - {response.text}")
-
+            """
 
 
 
@@ -176,7 +358,7 @@ def process_appointment_new():
                     "appointment_id": new_appointment_id,
                     "doctor_name": doctor_name,
                     "doctor_id": selected_doctor_id,
-                    # "queue_length": queue_length
+                    "queue_length": queue_length
                 }
             }), 200
 
@@ -191,14 +373,61 @@ def process_appointment_new():
 @app.route("/process/start", methods=['POST'])
 def process_appointment_start():
     """
-    Starts an appointment for a doctor by retrieving the next patient from the queue.
-    - Gets the next appointment in the queue.
-    - Deletes it from the queue.
-    - Fetches appointment details.
-    - Updates the appointment with start_time and notes.
-    - Retrieves the patient's allergies from the patient database.
-    - Returns the updated appointment details along with the allergies.
-    - {doctor_id: 1}
+    Start an appointment for a doctor by retrieving the next patient from the queue
+    ---
+    tags:
+      - Appointments
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          id: start_appointment
+          required:
+            - doctor_id
+          properties:
+            apikey:
+              type: string
+              example: admin
+              description: API key for authentication
+            doctor_id:
+              type: integer
+              example: 1
+              description: ID of the doctor to start an appointment for
+    responses:
+      200:
+        description: Appointment started successfully
+        schema:
+          properties:
+            code:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: Appointment started successfully
+            appointment_id:
+              type: integer
+              example: 123
+            patient_id:
+              type: integer
+              example: 456
+            patient_allergies:
+              type: array
+              items:
+                type: string
+              example: ["Penicillin", "Peanuts"]
+            patient_symptoms:
+              type: array
+              items:
+                type: string
+              example: ["Fever", "Headache"]
+            notes:
+              type: object
+              description: AI-recommended diagnoses
+      404:
+        description: No appointments in queue
+      500:
+        description: Server error
     """
     print("\n\n")
     print("!!!------------------------------NEW REQUEST TO /process/start------------------------------!!!")
@@ -296,6 +525,7 @@ def process_appointment_start():
         if allergies_response.status_code == 200 and allergies_response.text.strip():
             allergies_data = allergies_response.json()
             patient_allergies = allergies_data.get("allergies", ["No known allergies"])
+            patient_age = allergies_data.get("patient_allergies")
         else:
             patient_allergies = []
 
@@ -317,7 +547,7 @@ def process_appointment_start():
 
         response = client.models.generate_content(
             model="gemini-2.0-flash",
-            contents=f"You are a diagnosis recommender for a project. You will receive a list of symptoms and return 5 possible diagnoses with your confidence level from 0 to 100% in descending order. Return your results in json format and nothing else. There are the symptoms: {patient_symptoms} "
+            contents=f"You are a diagnosis recommender for a project. You will receive a list of symptoms and return 5 possible diagnoses with your confidence level from 0 to 100% in descending order. Return your results in json format and nothing else. The patient is {patient_age} years old. There are the symptoms: {patient_symptoms} "
         )
 
         # print(response.text)
@@ -400,15 +630,72 @@ def process_appointment_start():
 @app.route("/process/end", methods=['POST'])
 def process_appointment_end():
     """
-    Ends an appointment by updating the appointment details with end time, diagnosis, and medicine.
-    - Creates a prescription if medicine is provided.
-    - Updates the appointment record with end time, diagnosis, and prescription ID.
-    - {
-        appointment_id: 1,
-        patient_id: 1,
-        diagnosis: "Flu",
-        medicine: ["Antibiotics", "Antihistamines"]
-      }
+    End an appointment by updating details with end time, diagnosis, and medicine
+    ---
+    tags:
+      - Appointments
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          id: end_appointment
+          required:
+            - appointment_id
+            - patient_id
+          properties:
+            apikey:
+              type: string
+              example: admin
+              description: API key for authentication
+            appointment_id:
+              type: integer
+              example: 1
+              description: ID of the appointment to end
+            patient_id:
+              type: integer
+              example: 1
+              description: ID of the patient
+            diagnosis:
+              type: string
+              example: "Influenza"
+              description: Doctor's diagnosis
+            medicine:
+              type: array
+              items:
+                type: string
+              example: ["Antibiotics", "Antihistamines"]
+              description: List of prescribed medications
+    responses:
+      200:
+        description: Appointment ended successfully
+        schema:
+          properties:
+            code:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: Appointment ended successfully
+            data:
+              properties:
+                appointment_id:
+                  type: integer
+                  example: 1
+                diagnosis:
+                  type: string
+                  example: "Influenza"
+                end_time:
+                  type: string
+                  format: date-time
+                  example: "2025-04-07T14:30:00+08:00"
+                prescription_id:
+                  type: integer
+                  example: 101
+      400:
+        description: Invalid input data
+      500:
+        description: Server error
     """
 
     print("\n\n")
@@ -440,6 +727,48 @@ def process_appointment_end():
         print("\n\n")
         print("------------------------------STEP 14------------------------------")
 
+        appointment_response = requests.get(f"{appointment_URL}/{appointment_id}")
+        print(f"Appointment API (doctor_id fetch) Response Status: {appointment_response.status_code}")
+        print(f"Appointment API (doctor_id fetch) Response Content: {appointment_response.text}")
+
+        appointment_data = appointment_response.json()
+        doctor_id = appointment_data.get("doctor_id")
+
+
+
+        notification_data = {
+            "notification_type": "appointment_finish",
+            "doctor_id": doctor_id,
+            "appointment_type": "next"
+        }
+
+        print(notification_data, flush=True)
+
+        exchange_name = 'esd_clinic'
+
+        credentials = pika.PlainCredentials('admin', 'ESD213password!')
+        parameters = pika.ConnectionParameters(host=ip_address, credentials=credentials)
+
+        # Establish connection and channel
+        connection = pika.BlockingConnection(parameters)
+        channel = connection.channel()
+
+        channel.exchange_declare(exchange=exchange_name, exchange_type='topic', durable=True)
+
+        # Publish the message (no reply_to or correlation_id)
+        channel.basic_publish(
+            exchange=exchange_name,
+            routing_key="notification",
+            body=json.dumps(notification_data),
+            properties=pika.BasicProperties(
+                delivery_mode=2,  # Make message persistent
+                content_type='application/json'
+            )
+        )
+
+        print("Notification sent.", flush=True)
+
+        connection.close()
 
 
 
@@ -610,6 +939,56 @@ def process_appointment_end():
 # AFTER APPOINTMENT
 @app.route("/process/calculate", methods=['POST'])
 def process_appointment_calculate():
+    """
+    Calculate payment for an appointment
+    ---
+    tags:
+      - Payments
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          id: calculate_payment
+          required:
+            - appointment_id
+          properties:
+            apikey:
+              type: string
+              example: admin
+              description: API key for authentication
+            appointment_id:
+              type: integer
+              example: 1
+              description: ID of the appointment to calculate payment for
+    responses:
+      200:
+        description: Payment calculation completed successfully
+        schema:
+          properties:
+            code:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: Post-appointment (calculate) processing completed successfully
+            data:
+              properties:
+                payment_id:
+                  type: integer
+                  example: 501
+                payment_amount:
+                  type: number
+                  format: float
+                  example: 125.50
+      400:
+        description: Invalid input data
+      500:
+        description: Server error
+    """    
+
+    print("\n\n")
+    print("!!!------------------------------NEW REQUEST TO /process/calculate------------------------------!!!")
 
     if request.is_json:
         try:
@@ -691,7 +1070,7 @@ def process_appointment_calculate():
             print("------------------------------STEP 10 & 11------------------------------")
             
             calculate_medicines = invoke_http(f"{prescription_URL}/calculate_cost", method='POST', json={"medicines": medicine_list})
-            total_cost =float(calculate_medicines['total_cost']) + consultation_cost
+            total_cost =round(float(calculate_medicines['total_cost']) + consultation_cost,2)
             print('Total Cost (consultation + medicine): $',total_cost)
            
 
@@ -743,6 +1122,84 @@ def process_appointment_calculate():
 
 @app.route("/process/finish", methods=['POST'])
 def process_appointment_finish():
+    """
+    Process appointment finish
+    ---
+    tags:
+      - Appointment Processing
+    summary: Finalizes an appointment by updating payment information
+    description: Updates payment status and links payment to appointment after successful payment processing
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - appointment_id
+              - payment_id
+              - payment_status
+            properties:
+              apikey:
+                type: string
+                example: admin
+                description: API key for authentication
+              appointment_id:
+                type: string
+                description: ID of the appointment to update
+              payment_id:
+                type: string
+                description: ID of the processed payment
+              payment_status:
+                type: string
+                description: Status of the payment
+    responses:
+      200:
+        description: Post-appointment processing completed successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: integer
+                  example: 200
+                message:
+                  type: string
+                  example: Post-appointment (finish) processing completed successfully
+      400:
+        description: Invalid JSON input
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: integer
+                  example: 400
+                message:
+                  type: string
+                  example: Invalid JSON input
+      500:
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: integer
+                  example: 500
+                message:
+                  type: string
+                  example: Internal server error
+                error:
+                  type: string
+                  description: Error details
+    """    
+
+    print("\n\n")
+    print("!!!------------------------------NEW REQUEST TO /process/finish------------------------------!!!")
 
     if request.is_json:
         try:
@@ -751,7 +1208,7 @@ def process_appointment_finish():
             print("\nReceived post-payment request:", data)
             appointment_id = data.get("appointment_id")
             payment_id = data.get("payment_id")
-            payment_status  = data.get("payment_status")
+            # payment_status  = data.get("payment_status")
             # 18 Update payment_status in payment
            
             print("\n\n")

@@ -24,13 +24,51 @@ class Queue(db.Model):
 
     def json(self):
         return {
-            "doctor_id": self.doctor_id,
+            "doctor_id": self.doctor_id,  
             "appointment_id": self.appointment_id,
             "patient_contact": self.patient_contact
         }
 
 with app.app_context():
     db.create_all()
+
+@app.route("/queue/doctor/<int:doctor_id>", methods=['GET'])
+def get_appointments_for_doctor_queue(doctor_id):
+    """
+    Get all upcoming (queued) appointments for a specific doctor
+    ---
+    tags:
+      - Queue
+    parameters:
+      - name: doctor_id
+        in: path
+        required: true
+        type: integer
+        description: The doctor's ID
+    responses:
+      200:
+        description: List of upcoming appointments for the doctor
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              doctor_id:
+                type: integer
+              appointment_id:
+                type: integer
+              patient_contact:
+                type: integer
+      404:
+        description: No appointments found for this doctor in queue
+    """
+    appointments = Queue.query.filter_by(doctor_id=doctor_id).order_by(Queue.appointment_id).all()
+
+    if not appointments:
+        return jsonify({"error": "No appointments in queue for this doctor"}), 404
+
+    return jsonify([appt.json() for appt in appointments]), 200
+
 
 @app.route("/queue/shortest", methods=['GET'])
 def get_shortest_queue():

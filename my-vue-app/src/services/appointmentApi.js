@@ -40,9 +40,14 @@ export const appointmentApi = {
     const response = await appointmentApiInstance.get(`/appointment/records/${patientId}?apikey=admin`)
     return response.data
   },
-
+  
   getAppointmentsForDoctor: async (doctorId) => {
     const response = await appointmentApiInstance.get(`/appointment/doctor/${doctorId}?apikey=admin`)
+    return response.data
+  },
+
+  getDoctorQueueAppointments: async (doctorId) => {
+    const response = await appointmentApiInstance.get(`/queue/doctor/${doctorId}?apikey=admin`)
     return response.data
   },
 
@@ -52,5 +57,6 @@ export const appointmentApi = {
       payment_id: paymentId,
     })
     return response.data
-  },
+  }
+  
 }
