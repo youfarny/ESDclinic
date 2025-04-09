@@ -8,17 +8,18 @@ CREATE TABLE `patient`.`patient` (
   `patient_address` VARCHAR(200) NOT NULL,
   `patient_insurance` TINYINT NOT NULL,
   `patient_allergies` JSON NOT NULL,
+  `patient_age` INT NOT NULL,
   PRIMARY KEY (`patient_id`),
   UNIQUE INDEX `patient_id_UNIQUE` (`patient_id` ASC) VISIBLE);
   
   -- Insert fake patients
-INSERT INTO `patient`.`patient` (patient_name, patient_password, patient_contact, patient_address, patient_insurance, patient_allergies)
+INSERT INTO `patient`.`patient` (patient_name, patient_password, patient_contact, patient_address, patient_insurance, patient_allergies, patient_age)
 VALUES 
-('John Doe', 'password123', 987654321, '123 Main St', 1, '["Ibuprofen"]'),
-('Jane Smith', 'securepass', 876543210, '456 Oak St', 0, '["None"]'),
-('Alice Johnson', 'alicepass', 765432109, '789 Pine St', 1, '["Antihistamines"]'),
-('Bob Williams', 'bobpass', 654321098, '101 Maple St', 0, '["Paracetamol"]'),
-('Emily Brown', 'emilypass', 543210987, '202 Birch St', 1, '["None"]');
+('John Doe', 'password', 987654321, '123 Main St', 1, '["Ibuprofen"]', 13),
+('Jane Smith', 'password', 876543210, '456 Oak St', 0, '["None"]', 15),
+('Alice Johnson', 'password', 765432109, '789 Pine St', 1, '["Antihistamines"]', 57),
+('Bob Williams', 'password', 654321098, '101 Maple St', 0, '["Paracetamol"]', 3),
+('Emily Brown', 'password', 543210987, '202 Birch St', 1, '["None"]', 109);
   
 DROP DATABASE IF EXISTS queue;  
 CREATE DATABASE `queue` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;

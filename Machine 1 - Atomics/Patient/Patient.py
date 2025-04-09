@@ -4,7 +4,7 @@ from flasgger import Swagger
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:5173"])
+CORS(app, origins=["*"])
 
 
 
@@ -79,6 +79,7 @@ def authenticate_patient(patient_id, patient_password):
         return jsonify({"error": "Invalid credentials"}), 401
     
     return jsonify({"patient_id": patient.patient_id, "patient_name": patient.patient_name}), 200
+
 
 @app.route("/patient/<int:patient_id>", methods=['GET'])
 def get_patient(patient_id):
