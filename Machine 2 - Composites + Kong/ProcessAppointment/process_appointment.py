@@ -1208,7 +1208,7 @@ def process_appointment_finish():
             print("\nReceived post-payment request:", data)
             appointment_id = data.get("appointment_id")
             payment_id = data.get("payment_id")
-            payment_status  = data.get("payment_status")
+            # payment_status  = data.get("payment_status")
             # 18 Update payment_status in payment
            
             print("\n\n")
