@@ -10,7 +10,7 @@ from google import genai
 # import google.generativeai as genai
 import json
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["*"])
 
 # Define service URLs
 

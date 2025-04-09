@@ -4,7 +4,7 @@ from flasgger import Swagger
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:5173"])  # your Vue frontend
+CORS(app, origins=["*"])  # your Vue frontend
 
 # Database Config
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ESD213password!@116.15.73.191:3306/queue'

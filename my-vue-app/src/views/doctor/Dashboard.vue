@@ -45,6 +45,16 @@ const fetchAppointments = async () => {
   }
 }
 
+const handleStartConsultation = async () => {
+  try {
+    const response = await processApi.startAppointment(doctorId)
+    activeConsultation.value = response
+    activeTab.value = 'consultations'
+  } catch (err) {
+    console.error('Failed to start consultation:', err)
+  }
+}
+
 const submitConsultation = async (appointmentId) => {
   try {
     await appointmentApi.endAppointment(appointmentId, new Date().toISOString(), diagnosis.value, 1)
@@ -100,22 +110,14 @@ onMounted(fetchAppointments)
       >Past Records</button>
     </div>
 
-    <div v-if="activeTab === 'appointments'">
-      <h2 class="text-xl font-semibold mt-4 mb-2">Today's Appointments</h2>
-      <div v-if="todayAppointments.length === 0">No appointments today.</div>
+    <!-- Appointments Tab -->
+    <div v-if="activeTab === 'appointments'" class="space-y-4">
       <AppointmentCard
-        v-for="a in todayAppointments"
-        :key="a.appointment_id"
-        :appointment="a"
-      >
-        <template #actions>
-          <button
-            v-if="a.appointment_id === Math.min(...todayAppointments.map(appt => appt.appointment_id))"
-            class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            @click="startConsultation(a.appointment_id)"
-          >Start Consultation</button>
-        </template>
-      </AppointmentCard>
+        v-for="appointment in todayAppointments"
+        :key="appointment.appointment_id"
+        :appointment="appointment"
+        @start-consultation="handleStartConsultation"
+      />
     </div>
 
     <div v-else-if="activeTab === 'consultation'">

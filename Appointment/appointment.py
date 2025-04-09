@@ -4,7 +4,11 @@ from flasgger import Swagger
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["*"])
+
+@app.before_request
+def log_incoming():
+    print(f"🔥 Flask received: {request.method} {request.path}", flush=True)
 
 # Database Config
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ESD213password!@116.15.73.191:3306/appointment'
@@ -47,6 +51,7 @@ class Appointment(db.Model):
 # Initialize Database
 with app.app_context():
     db.create_all()
+    
 
 # Get Patient Records
 @app.route("/appointment/records/<int:patient_id>", methods=['GET'])
@@ -79,7 +84,7 @@ def get_patient_appointments(patient_id):
 
 
 # get appointments for doctor 
-@app.route("/appointment/doctor/<int:doctor_id>", methods=['GET'])
+@app.route("/appointment/doctor/<doctor_id>", methods=['GET', 'OPTIONS'])
 def get_doctor_appointments(doctor_id):
     appointments = Appointment.query.filter_by(doctor_id=doctor_id).all()
     if not appointments:

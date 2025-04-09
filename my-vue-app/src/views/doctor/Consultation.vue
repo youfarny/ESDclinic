@@ -82,17 +82,34 @@
 import { ref, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
+import { processApi } from '@/services/api.js'
+
 
 const store = useStore()
 const route = useRoute()
 const router = useRouter()
 
+const doctorId = localStorage.getItem('doctor_id')
 const appointment = ref(null)
 const diagnosis = ref('')
 const prescription = ref('')
 const allergies = ref('')
 const isLoading = ref(false)
 const error = ref(null)
+
+const handleStartAppointment = async () => {
+  try {
+    isStarting.value = true
+    error.value = null
+    const response = await processApi.startAppointment(doctorId)
+    appointment.value = response
+  } catch (err) {
+    error.value = err.message || 'Failed to start appointment'
+    console.error('Start error:', err)
+  } finally {
+    isStarting.value = false
+  }
+}
 
 // Fetch appointment details
 const fetchAppointment = async () => {
