@@ -77,6 +77,15 @@ def get_patient_appointments(patient_id):
         return jsonify({"message": "No appointments found"}), 404
     return jsonify([appointment.json() for appointment in appointments]), 200
 
+# get appointments for doctor 
+@app.route("/appointment/doctor/<int:doctor_id>", methods=['GET'])
+def get_doctor_appointments(doctor_id):
+    appointments = Appointment.query.filter_by(doctor_id=doctor_id).all()
+    if not appointments:
+        return jsonify({"message": "No appointments found"}), 404
+    return jsonify([appointment.json() for appointment in appointments]), 200
+
+
 # Create New Appointment
 @app.route("/appointment/new", methods=['POST'])
 def create_appointment():

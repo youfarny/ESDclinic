@@ -1,3 +1,6 @@
+include:
+  - path: SendNotification/docker-compose.yml
+
 services:
 
   appointment:

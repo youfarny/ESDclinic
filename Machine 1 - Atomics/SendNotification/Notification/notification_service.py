@@ -108,9 +108,12 @@ def craft_message(appointment_type, queue_length=None, zoom_link=None):
 # Callback function to consume messages from RabbitMQ
 def callback(ch, method, properties, body):
     # Decode the message
+    print("\n\n")
+    print("!!!------------------------------NEW REQUEST TO NOTIFICATION SERVICE------------------------------!!!")
     message_data = json.loads(body)
     print(message_data, flush=True)
     appointment_type = message_data.get('appointment_type')
+    print(appointment_type)
 
     if appointment_type == 'before':
 
@@ -147,6 +150,7 @@ def callback(ch, method, properties, body):
         except Exception as e:
             print(f"Failed to send message to {patient_contact}: {e}")
             response_payload = {
+                "queue_length": queue_length,
                 "error": str(e),
                 "status": "failed"
             }
