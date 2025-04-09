@@ -84,7 +84,7 @@ def authenticate_patient(patient_id, patient_password):
 @app.route("/patient/<int:patient_id>", methods=['GET'])
 def get_patient(patient_id):
     """
-    Get a patient's allergy information
+    Get complete information for a specific patient
     ---
     tags:
       - Patient
@@ -98,7 +98,7 @@ def get_patient(patient_id):
           example: 123
     responses:
       200:
-        description: A list of the patient's allergies
+        description: Complete patient information
         content:
           application/json:
             schema:
@@ -106,12 +106,31 @@ def get_patient(patient_id):
               properties:
                 patient_id:
                   type: integer
-                  example: 123
-                allergies:
+                  example: 1
+                patient_name:
+                  type: string
+                  example: "John Doe"
+                patient_password:
+                  type: string
+                  example: "password"
+                patient_address:
+                  type: string
+                  example: "123 Main St"
+                patient_contact:
+                  type: integer
+                  example: 98765432
+                patient_age:
+                  type: integer
+                  example: 10
+                patient_insurance:
+                  type: boolean
+                  example: 1
+                patient_allergies:
                   type: array
                   items:
                     type: string
                   example: ["Peanuts", "Shellfish"]
+          
       404:
         description: Patient not found
         content:
@@ -121,7 +140,7 @@ def get_patient(patient_id):
               properties:
                 error:
                   type: string
-                  example: Patient not found
+                  example: "Patient not found"
     """
     patient = Patient.query.get(patient_id)
     if not patient:
@@ -266,6 +285,9 @@ def create_patient():
               type: array
               items:
                 type: string
+            patient_age:
+                  type: integer
+                  example: 10
     responses:
       201:
         description: Patient created successfully
@@ -289,7 +311,8 @@ def create_patient():
         patient_name=data["patient_name"],
         patient_address=data["patient_address"],
         patient_password=data["patient_password"],
-        patient_allergies=data.get("patient_allergies", [])
+        patient_allergies=data.get("patient_allergies", []),
+        patient_age=data["patient_age"]
     )
 
     try:
@@ -325,6 +348,8 @@ def update_patient(patient_id):
               type: boolean
             patient_name:
               type: string
+            patient_age:
+              type: integer
             patient_address:
               type: string
             patient_password:
