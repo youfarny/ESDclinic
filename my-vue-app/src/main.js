@@ -1,18 +1,12 @@
-import './assets/global.css';
-
-import { createApp } from 'vue';  
-import './style.css';
-import App from './App.vue';
-import router from './router';  
+import { createApp } from 'vue'
+import App from './App.vue'
+import router from './router'
 import store from './store'
+import './assets/main.css'
 
+const app = createApp(App)
 
-createApp(App)
-  .use(router)  
-  .use(store)
-  .mount('#app');  
+app.use(router)
+app.use(store)
 
-
-  // src/main.js
-import 'bootstrap/dist/css/bootstrap.css'
-import 'bootstrap/dist/js/bootstrap.js'
+app.mount('#app') 

@@ -1,126 +1,76 @@
-/* Modify these styles in your global.css */
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  background-color: #ffffff; /* Light blue background */
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-body {
-  font-family: Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  /* overflow-y: auto; */
-}
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-/* In your global.css */
-.content-card {
-  width: 90%;
-  max-width: 380px; /* Mobile phone width */
-  padding: 2.5rem 2rem;
-  background-color: #536b7b;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+ 
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+ 
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
 }
-
-/* Make sure page container is properly centered */
-.page-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100vh;
-  background-color: #d1eef3;
-}
-  
-/* Login specific smaller card */
-.login-card {
-  max-width: 400px;
-}
-
-  /* Navigation Bar */
-  .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #ffffff; /* White background */
-    padding: 10px 20px;
-    border-bottom: 1px solid #6c6464; /* Light gray border */
+ 
+@layer base {
+  * {
+    @apply border-border;
   }
-  
-  .navbar .logo {
-    font-size: 24px;
-    font-weight: bold;
-    color: #ae2424; /* Dark gray text */
+  body {
+    @apply bg-background text-foreground;
   }
-  
-  .navbar .links {
-    display: flex;
-    gap: 15px; /* Space between links */
-  }
-  
-  .navbar .logout-btn {
-    background-color: #ff4d4d; /* Red button */
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .navbar .logout-btn:hover {
-    background-color: #ff0000; /* Darker red on hover */
-  }
-  
-  /* Page Titles */
-  .page-title {
-    text-align: center;
-    font-size: 2rem;
-    color: #333333; /* Dark gray text */
-  }
-  
-  /* Dashboard Content */
-  .dashboard-content h1 {
-    text-align: center;
-  }
-  
-  /* Cards Section */
-  .cards {
-    display: flex;
-    justify-content: space-around; /* Space between cards */
-    margin-top: 20px;
-  }
-  
-  .card {
-    background-color: #333333; /* Dark gray card background */
-    color: white; /* White text */
-    text-align: center;
-    padding: 20px;
-    border-radius: 10px;
-  }
-  
-  .card p {
-    font-size: 16px; /* Smaller text for labels */
-  }
-  
-  .card h2 {
-    font-size: 24px; /* Larger text for numbers */
-  }
-  
-  /* Appointments Section and Inventory Table Styles */
-  .appointments, .inventory-table {
-    margin-top: 30px;
-  }
-  
-  .appointments h2, .inventory-table h2 {
-      text-align:center}
-  /* Table Styles */
-  table {
-      width:auto;}
-  
+} 

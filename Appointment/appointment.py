@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flasgger import Swagger
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # Database Config
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ESD213password!@116.15.73.191:3306/appointment'
@@ -74,6 +76,17 @@ def get_patient_appointments(patient_id):
     if not appointments:
         return jsonify({"message": "No appointments found"}), 404
     return jsonify([appointment.json() for appointment in appointments]), 200
+
+
+# get appointments for doctor 
+@app.route("/appointment/doctor/<int:doctor_id>", methods=['GET'])
+def get_doctor_appointments(doctor_id):
+    appointments = Appointment.query.filter_by(doctor_id=doctor_id).all()
+    if not appointments:
+        return jsonify({"message": "No appointments found"}), 404
+    return jsonify([appointment.json() for appointment in appointments]), 200
+
+
 
 # Create New Appointment
 @app.route("/appointment/new", methods=['POST'])

@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flasgger import Swagger
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # Database Config
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ESD213password!@116.15.73.191:3306/payment'
