@@ -115,6 +115,8 @@ def create_appointment():
         schema:
           type: object
           properties:
+            appointment_id:
+              type: integer
             doctor_id:
               type: integer
             patient_contact:

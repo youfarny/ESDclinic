@@ -77,13 +77,36 @@ def get_patient_appointments(patient_id):
         return jsonify({"message": "No appointments found"}), 404
     return jsonify([appointment.json() for appointment in appointments]), 200
 
-# get appointments for doctor 
+
+
 @app.route("/appointment/doctor/<int:doctor_id>", methods=['GET'])
 def get_doctor_appointments(doctor_id):
+    """
+    Get all appointments for a doctor
+    ---
+    tags:
+      - Appointment
+    parameters:
+      - name: doctor_id
+        in: path
+        type: integer
+        required: true
+        description: The doctor ID to fetch appointments
+    responses:
+      200:
+        description: A list of appointments for the doctor
+        schema:
+          type: array
+          items:
+            $ref: '#/definitions/Appointment'
+      404:
+        description: No appointments found
+    """
     appointments = Appointment.query.filter_by(doctor_id=doctor_id).all()
     if not appointments:
         return jsonify({"message": "No appointments found"}), 404
     return jsonify([appointment.json() for appointment in appointments]), 200
+
 
 
 # Create New Appointment

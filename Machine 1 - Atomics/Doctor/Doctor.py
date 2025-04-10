@@ -39,11 +39,17 @@ def create_doctor():
     tags:
       - Doctor
     parameters:
-      - name: doctor_name
+      - name: body
         in: body
-        type: string
         required: true
-        description: The name of the doctor to create
+        schema:
+          type: object
+          required:
+            - doctor_name
+          properties:
+            doctor_name:
+              type: string
+              example: "Dr. John Doe"
     responses:
       201:
         description: The doctor was successfully created
@@ -181,11 +187,18 @@ def update_doctor(doctor_id):
         type: integer
         required: true
         description: The doctor ID to update
-      - name: doctor_name
+    parameters:
+      - name: body
         in: body
-        type: string
         required: true
-        description: The new name of the doctor
+        schema:
+          type: object
+          required:
+            - doctor_name
+          properties:
+            doctor_name:
+              type: string
+              example: "Dr. John Doe"
     responses:
       200:
         description: The doctor was updated
