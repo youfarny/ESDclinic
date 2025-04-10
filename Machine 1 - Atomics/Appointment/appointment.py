@@ -18,7 +18,7 @@ swagger = Swagger(app, template={
     "swagger": "2.0",
     "info": {
         "title": "SMUDOC Appointment API",
-        "description": "API documentation for managing appointments in the SMUDOC",
+        "description": "API documentation for managing appointments in the SMUC",
         "version": "1.0.0"
     },
     "basePath": "/",

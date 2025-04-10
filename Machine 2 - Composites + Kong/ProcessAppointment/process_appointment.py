@@ -480,7 +480,7 @@ def process_appointment_start():
 
 
 
-        # 4 Delete appointment from queue {appointment_id}
+        # 4 Delete appointment from queue {appointment_id} & # 5 Return deletion status
         print("\n\n")
         print("------------------------------STEP 4 & 5------------------------------")
         print(f"Deleting appointment {appointment_id} from queue...")
@@ -574,7 +574,7 @@ def process_appointment_start():
 
 
 
-        # 12 Update appointment {appointment_id, notes}
+        # 12 Update appointment {appointment_id, notes, start_time}
         print("\n\n")
         print("------------------------------STEP 12 & 13------------------------------")
         
@@ -606,21 +606,21 @@ def process_appointment_start():
         
 
 
-        # 14 & 15 Zoom
+        # Zoom
         print("\n\n")
-        print("------------------------------STEP 14 & 15------------------------------")
+        #print("------------------------------STEP 14 & 15------------------------------")
 
-        zoom_link = "testing"
-
-
+        zoom_link = "https://us04web.zoom.us/j/3724875036?pwd=eXMzSnpuR2I4OUZyYkVBbWxlZ2E0UT09"
 
 
 
 
 
-        # 16 Notification
+
+
+        # 14 Notification
         print("\n\n")
-        print("------------------------------STEP 16------------------------------")
+        print("------------------------------STEP 14------------------------------")
 
         notification_data = {
             "notification_type": "appointment_start",
@@ -668,9 +668,9 @@ def process_appointment_start():
 
 
 
-        # 18 Return appointment details to the doctor
+        # 16 Return appointment details to the doctor
         print("\n\n")
-        print("------------------------------STEP 18------------------------------")
+        print("------------------------------STEP 16------------------------------")
         return jsonify({
             "code": 200,
             "message": "Appointment started successfully",
@@ -764,7 +764,7 @@ def process_appointment_end():
     end_time = datetime.now(gmt_plus_8).isoformat()
     print(end_time)
 
-    # 19 Send appointment info at end of appointment
+    # 19 UI sends appointment info at end of appointment
     print("\n\n")
     print("------------------------------STEP 19------------------------------")
     try:
