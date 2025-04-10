@@ -453,25 +453,10 @@ const cancelLeave = () => {
 onMounted(() => {
   fetchAppointment()
   window.addEventListener('beforeunload', handleBeforeUnload)
-  
-  // Add meta tag for Content Security Policy
-  const meta = document.createElement('meta');
-  meta.httpEquiv = "Content-Security-Policy";
-  meta.content = "frame-src https://zoom.us https://*.zoom.us; connect-src https://zoom.us https://*.zoom.us; script-src 'self' https://zoom.us https://*.zoom.us 'unsafe-inline'; style-src 'self' https://zoom.us https://*.zoom.us 'unsafe-inline';";
-  document.head.appendChild(meta);
 })
 
 // Clean up when component unmounts
 onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
-  
-  // Remove the added meta tag
-  const metaTags = document.head.getElementsByTagName('meta');
-  for (let i = 0; i < metaTags.length; i++) {
-    if (metaTags[i].httpEquiv === "Content-Security-Policy") {
-      document.head.removeChild(metaTags[i]);
-      break;
-    }
-  }
 })
 </script>

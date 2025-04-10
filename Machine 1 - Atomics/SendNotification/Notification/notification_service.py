@@ -186,7 +186,7 @@ def callback(ch, method, properties, body):
 
     elif appointment_type == "during":
         print("\n\n")
-        print("------------------------------STEP 16------------------------------")
+        print("------------------------------STEP 14------------------------------")
         patient_contact = message_data.get('patient_contact')
         print(f"NEXT PATIENT_CONTACT: {patient_contact}")
 
@@ -198,7 +198,7 @@ def callback(ch, method, properties, body):
         patient_contact = "+65" + str(patient_contact)
 
         print("\n\n")
-        print("------------------------------STEP 17------------------------------")
+        print("------------------------------STEP 15------------------------------")
         try:
             msg = client.messages.create(
                 body=message,
