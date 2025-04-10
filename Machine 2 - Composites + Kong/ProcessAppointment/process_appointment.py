@@ -480,7 +480,7 @@ def process_appointment_start():
 
 
 
-        # 4 Delete appointment from queue {appointment_id}
+        # 4 Delete appointment from queue {appointment_id} & # 5 Return deletion status
         print("\n\n")
         print("------------------------------STEP 4 & 5------------------------------")
         print(f"Deleting appointment {appointment_id} from queue...")
@@ -574,7 +574,7 @@ def process_appointment_start():
 
 
 
-        # 12 Update appointment {appointment_id, notes}
+        # 12 Update appointment {appointment_id, notes, start_time}
         print("\n\n")
         print("------------------------------STEP 12 & 13------------------------------")
         
@@ -764,7 +764,7 @@ def process_appointment_end():
     end_time = datetime.now(gmt_plus_8).isoformat()
     print(end_time)
 
-    # 19 Send appointment info at end of appointment
+    # 19 UI sends appointment info at end of appointment
     print("\n\n")
     print("------------------------------STEP 19------------------------------")
     try:
