@@ -282,8 +282,7 @@
 import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
-import { appointmentApi, patientApi } from '@/services/api.js'
-import { zoomApi } from '@/services/zoomApi.js'
+import { appointmentApi, patientApi, zoomApi } from '@/services/api.js'
 
 const store = useStore()
 const route = useRoute()
