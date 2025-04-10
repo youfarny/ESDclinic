@@ -477,7 +477,7 @@ def process_appointment_start():
 
         # 4 Delete appointment from queue {appointment_id}
         print("\n\n")
-        print("------------------------------STEP 4------------------------------")
+        print("------------------------------STEP 4 & 5------------------------------")
         print(f"Deleting appointment {appointment_id} from queue...")
         delete_response = requests.delete(f"{queue_URL}/{doctor_id}/{appointment_id}")
         delete_data = delete_response.json()
@@ -494,7 +494,7 @@ def process_appointment_start():
         # 5 Get full appointment details {appointment_id}
         # 6 Return appointment details {...}
         print("\n\n")
-        print("------------------------------STEP 5 & 6------------------------------")
+        print("------------------------------STEP 6 & 7------------------------------")
         print(f"Fetching details for appointment_id: {appointment_id}")
         appointment_response = requests.get(f"{appointment_URL}/{appointment_id}")
 
@@ -521,7 +521,7 @@ def process_appointment_start():
         # 7 Patient allergies {patient_id}
         # 8 Return patient allergies {patient_id, patient_allergies}
         print("\n\n")
-        print("------------------------------STEP 7 & 8------------------------------")
+        print("------------------------------STEP 8 & 9------------------------------")
         print(f"Fetching allergies for patient_id: {patient_id}")
         print(f"{patient_URL}/patient/allergies/{patient_id}")
         allergies_response = requests.get(f"{patient_URL}/allergies/{patient_id}")
@@ -543,7 +543,7 @@ def process_appointment_start():
         # 9 Send symptoms to AI {patient_symptoms}
         # 10 Return recommendations {diagnoses}
         print("\n\n")
-        print("------------------------------STEP 9 & 10------------------------------")
+        print("------------------------------STEP 10 & 11------------------------------")
         patient_symptoms = appointment_data.get("patient_symptoms", "Unknown symptoms")
 
         if not patient_id:
@@ -571,7 +571,7 @@ def process_appointment_start():
 
         # 11 Update appointment {appointment_id, notes}
         print("\n\n")
-        print("------------------------------STEP 11 & 12------------------------------")
+        print("------------------------------STEP 12 & 13------------------------------")
         
         update_payload = {
             "appointment_id": appointment_id, 
@@ -603,7 +603,7 @@ def process_appointment_start():
 
         # 13 & 14 Zoom
         print("\n\n")
-        print("------------------------------STEP 13 & 14------------------------------")
+        print("------------------------------STEP 14 & 15------------------------------")
 
         zoom_link = "testing"
 
@@ -615,7 +615,7 @@ def process_appointment_start():
 
         # 15 Notification
         print("\n\n")
-        print("------------------------------STEP 15------------------------------")
+        print("------------------------------STEP 16------------------------------")
 
         notification_data = {
             "notification_type": "appointment_start",
@@ -665,7 +665,7 @@ def process_appointment_start():
 
         # 17 Return appointment details to the doctor
         print("\n\n")
-        print("------------------------------STEP 17------------------------------")
+        print("------------------------------STEP 18------------------------------")
         return jsonify({
             "code": 200,
             "message": "Appointment started successfully",
@@ -761,7 +761,7 @@ def process_appointment_end():
 
     # 18 Send appointment info at end of appointment
     print("\n\n")
-    print("------------------------------STEP 18------------------------------")
+    print("------------------------------STEP 19------------------------------")
     try:
         data = request.get_json()
         appointment_id = data.get("appointment_id")
@@ -794,7 +794,7 @@ def process_appointment_end():
         # 20 Return patient allergies {patient_id, allergies} 
         # Verification for allergies
         print("\n\n")
-        print("------------------------------STEP 19 & 20------------------------------")
+        print("------------------------------STEP 20 & 21------------------------------")
 
         print(f"Fetching allergies for patient_id: {patient_id}")
         print(f"{patient_URL}/patient/allergies/{patient_id}")
@@ -827,7 +827,7 @@ def process_appointment_end():
         # 21 Create new prescription {medicine}
         # 22 Return prescription_id {prescription_id} 
         print("\n\n")
-        print("------------------------------STEP 21 & 22------------------------------")
+        print("------------------------------STEP 22 & 23------------------------------")
 
         prescription_id = None
         if medicine:
@@ -867,7 +867,7 @@ def process_appointment_end():
         # 23 Update diagnosis / prescription in appointment {appointment_id, end_time, diagnosis, prescription_id}
         # 24 Return success / failure {appointment_id, success} 
         print("\n\n")
-        print("------------------------------STEP 22 & 23------------------------------")
+        print("------------------------------STEP 24 & 25------------------------------")
 
         update_payload = {
             "appointment_id": appointment_id,
@@ -903,7 +903,7 @@ def process_appointment_end():
         # 25 Send Notification to next patient in queue
         # {doctor_id} 
         print("\n\n")
-        print("------------------------------STEP 25------------------------------")
+        print("------------------------------STEP 26------------------------------")
 
         appointment_response = requests.get(f"{appointment_URL}/{appointment_id}")
         print(f"Appointment API (doctor_id fetch) Response Status: {appointment_response.status_code}")
@@ -958,7 +958,7 @@ def process_appointment_end():
 
         # 26 Return success / failure {appointment_id, prescription_id, success} 
         print("\n\n")
-        print("------------------------------STEP 26------------------------------")
+        print("------------------------------STEP 30------------------------------")
 
         return jsonify({
             "code": 200,
