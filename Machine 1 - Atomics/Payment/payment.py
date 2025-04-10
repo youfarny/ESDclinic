@@ -12,7 +12,7 @@ app = Flask(__name__)
 CORS(app, origins=["*"])
 
 # Database Config
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ESD213password!@116.15.73.191:3306/payment'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ESD213password!@202.166.134.237:3306/payment'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)

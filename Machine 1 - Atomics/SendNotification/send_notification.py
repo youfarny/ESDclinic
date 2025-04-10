@@ -13,7 +13,7 @@ CORS(app)
 from os import environ
 
 # Get the IP address from an environment variable, defaulting to "116.15.73.191" if not set
-ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
+ip_address = environ.get("IP_ADDRESS", "202.166.134.237")
 
 # Define URLs using the IP address from the environment variable
 appointment_URL = f"http://{ip_address}:5000/appointment"
