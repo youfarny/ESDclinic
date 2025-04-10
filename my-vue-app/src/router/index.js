@@ -4,9 +4,6 @@ import DoctorDashboard from '../views/doctor/Dashboard.vue'
 import DoctorAppointments from '../components/AppointmentCard.vue'
 import DoctorConsultation from '../views/doctor/Consultation.vue'
 import DoctorRecords from '../views/doctor/Records.vue'
-import DoctorAppointments from '../views/doctor/Appointments.vue'
-import DoctorConsultation from '../views/doctor/Consultation.vue'
-import DoctorRecords from '../views/doctor/Records.vue'
 
 import PatientDashboard from '../views/patient/PatientDashboard.vue'
 import BookAppointment from '../views/patient/BookAppointment.vue'
@@ -46,11 +43,7 @@ const routes = [
     component: MedicalRecords,
     meta: { requiresAuth: true, role: 'patient' }
   },
-  {
-    path: '/patient/payment-success',
-    name: 'PaymentSuccess',
-    component: () => import('../views/patient/PaymentSuccess.vue')
-  },
+
 
   // doctor routes
   {
