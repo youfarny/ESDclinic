@@ -760,7 +760,14 @@ def process_appointment_end():
     try:
         data = request.get_json()
         appointment_id = data.get("appointment_id")
-        patient_id = data.get("patient_id")
+        
+        try:
+            patient_id = data.get("patient_id")
+        except:
+            appointment_response = requests.get(f"{appointment_URL}/{appointment_id}")
+            patient_id = appointment_response.get("patient_id")
+        
+        
         diagnosis = data.get("diagnosis", "")
         medicine = data.get("medicine", "")
 
@@ -770,7 +777,7 @@ def process_appointment_end():
         print(data)
 
 
-
+        
 
 
 
@@ -953,6 +960,8 @@ def process_appointment_end():
             "message": "Appointment ended successfully",
             "data": {
                 "appointment_id": appointment_id,
+                "patient_id": patient_id,
+                "doctor_id": doctor_id,
                 "diagnosis": diagnosis,
                 "end_time": end_time,
                 "prescription_id": prescription_id
