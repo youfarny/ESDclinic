@@ -5,17 +5,6 @@
     <p v-if="error" class="text-red-600 mb-4">{{ error }}</p>
     <p v-if="successMessage" class="text-green-600 mb-4">{{ successMessage }}</p>
 
-<!-- Back button after successful payment -->
-    <div v-if="successMessage">
-      <button
-        @click="goBack"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      >
-        Go Back to My Appointments
-      </button>
-    </div>
-
-
     <div v-for="appt in appointments" :key="appt.appointment_id" class="border p-4 mb-4 rounded flex justify-between items-center">
       <div>
         <p><strong>Doctor ID:</strong> {{ appt.doctor_id }}</p>
@@ -26,26 +15,14 @@
         <p><strong>Status:</strong> {{ appt.payment_status === 0 ? 'Unpaid' : 'Paid' }}</p>
       </div>
 
-      <div>
-  <div
-    v-if="appt.payment_status === 0"
-    class="flex justify-end"
-  >
-    <button
-      @click="goToStripe(appt)"
-      class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-    >
-      Pay Now
-    </button>
-  </div>
-  <div
-    v-else
-    class="text-green-700 font-semibold"
-  >
-    ✅ Paid
-  </div>
-</div>
-
+      <div v-if="appt.payment_status === 0">
+        <button
+          @click="goToStripe(appt)"
+          class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          Pay Now
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -57,10 +34,6 @@ import axios from 'axios'
 const appointments = ref([])
 const error = ref('')
 const successMessage = ref('')
-const goBack = () => {
-  window.location.href = '/patient/my-appointments'
-}
-
 
 let patient = {}
 try {
@@ -113,8 +86,7 @@ const loadAppointments = async () => {
             ...appt,
             total_cost: payment_amount ?? 'N/A',
             payment_id: payment_id ?? null,
-            payment_status: payment_status === true ? 1 : 0
-
+            payment_status: payment_status ?? 0,
           }
         } catch (calcErr) {
           console.error(`Failed to calculate payment for appointment ${appt.appointment_id}`, calcErr)
@@ -128,53 +100,44 @@ const loadAppointments = async () => {
     console.error('Error loading appointments:', err)
     error.value = 'Failed to load appointments'
   }
-};
+}
 const goToStripe = async (appt) => {
   try {
-    // Get the most updated payment info
-    const res = await axios.post(`http://localhost:8000/process/calculate?apikey=admin`, {
-      appointment_id: appt.appointment_id
-    })
-    const { payment_id, payment_amount } = res.data.data || {}
-
-    if (!payment_id) {
-      throw new Error("No payment_id returned from process/calculate")
+    const payload = {
+      mode: "payment",
+      success_url: `http://localhost:5173/patient/payment-success?payment=success&appointment_id=${appt.appointment_id}&payment_id=${appt.payment_id}`,
+      cancel_url: `http://localhost:5173/patient/my-appointments`,
+      currency: "usd",
+      product_name: `Appointment #${appt.appointment_id}`,
+      unit_amount: Math.round(Math.abs(appt.total_cost * 100)),  // ✅ fix here
+      quantity: 1
     }
 
-    // Save it in sessionStorage
-    sessionStorage.setItem("last_payment", JSON.stringify({
-      appointment_id: appt.appointment_id,
-      payment_id: payment_id
-    }))
+    console.log("Stripe payload:", payload)
 
-    // Proceed to Stripe
-    const stripeResponse = await fetch("https://personal-5nnqipga.outsystemscloud.com/Stripe/rest/payments/checkout", {
+    const response = await fetch("https://personal-5nnqipga.outsystemscloud.com/Stripe/rest/payments/checkout", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mode: "payment",
-        success_url: `http://localhost:5173/patient/my-appointments?payment=success`,
-        cancel_url: `http://localhost:5173/patient/my-appointments`,
-        currency: "usd",
-        product_name: `Appointment #${appt.appointment_id}`,
-        unit_amount: Math.abs(payment_amount),
-        quantity: 1
-      })
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
     })
 
-    const stripeData = await stripeResponse.json()
-    const redirectUrl = stripeData.url || stripeData.redirect_url || stripeData.checkout_url
+    const data = await response.json()
 
-    if (redirectUrl) {
-      window.location.href = redirectUrl
+    if (response.ok && (data.checkout_url || data.url || data.redirect_url)) {
+      window.location.href = data.checkout_url || data.url || data.redirect_url
     } else {
-      throw new Error("Stripe did not return a redirect URL")
+      console.error("Stripe error:", data)
+      throw new Error("Failed to get Stripe checkout link")
     }
+
   } catch (err) {
-    console.error("Stripe error:", err)
     alert("Stripe error: " + err.message)
+    console.error("Stripe redirect error:", err)
   }
 }
 
 
 </script>
+
