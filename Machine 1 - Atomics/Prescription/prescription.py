@@ -14,7 +14,67 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Initialize Swagger
-swagger = Swagger(app)
+swagger = Swagger(app, template={
+    "swagger": "2.0",
+    "info": {
+        "title": "SMUDOC Prescription API",
+        "description": "API documentation for managing prescriptions and medicine costs in SMUDOC",
+        "version": "1.0.0"
+    },
+    "basePath": "/",
+    "schemes": ["http"],
+    "tags": [
+        {
+            "name": "Prescription",
+            "description": "Endpoints for handling prescriptions"
+        },
+        {
+            "name": "Medicine",
+            "description": "Endpoints for retrieving and calculating medicine costs"
+        }
+    ],
+    "definitions": {
+        "Prescription": {
+            "type": "object",
+            "properties": {
+                "prescription_id": {
+                    "type": "integer",
+                    "example": 1,
+                    "description": "Unique ID for the prescription"
+                },
+                "medicine": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": ["flu", "cough"],
+                    "description": "List of medicines prescribed"
+                },
+                "appointment_id": {
+                    "type": "integer",
+                    "example": 123,
+                    "description": "Associated appointment ID"
+                }
+            }
+        },
+        "Medicine": {
+            "type": "object",
+            "properties": {
+                "indiv_medicine": {
+                    "type": "string",
+                    "example": "paracetamol",
+                    "description": "Name of the medicine"
+                },
+                "cost": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 12.5,
+                    "description": "Cost of the medicine"
+                }
+            }
+        }
+    }
+})
 
 class Prescription(db.Model):
     __tablename__ = 'prescription'

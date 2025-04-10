@@ -33,8 +33,8 @@ swagger_config = {
 swagger_template = {
     "swagger": "2.0",
     "info": {
-        "title": "Clinic Process API",
-        "description": "API for managing clinic appointment processes",
+        "title": "SMUDOC ProcessAppointment API",
+        "description": "API for processing appointment",
         "version": "1.0.0"
     },
     "basePath": "/",
