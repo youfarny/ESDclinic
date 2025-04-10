@@ -10,16 +10,9 @@
             </svg>
           </div>
           <h1 class="text-2xl font-bold text-gray-800">Consultation</h1>
-        </div>  
+        </div>
         <div class="flex items-center">
-          <!-- Zoom Button - toggles the video interface -->
-          <button @click="toggleZoomInterface" 
-                  class="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg mr-3 hover:bg-blue-700 transition-colors duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-            </svg>
-            {{ showZoomInterface ? 'Hide Video Call' : 'Start Video Consultation' }}
-          </button>
+          <!-- Removed toggle button -->
           <div class="bg-blue-100 px-4 py-2 rounded-full text-blue-800 font-medium">
             Appointment #{{ appointmentId }}
           </div>
@@ -122,9 +115,9 @@
         </div>
         
         <!-- Right Column: Embedded Zoom Interface -->
-        <div v-if="showZoomInterface && zoomMeeting?.join_url" class="h-full">
+        <div v-if="zoomMeeting?.join_url" class="h-full">
           <div class="bg-white rounded-lg shadow overflow-hidden h-full flex flex-col">
-            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-3 flex justify-between items-center">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-3">
               <h2 class="text-xl font-semibold text-white flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
@@ -133,24 +126,30 @@
                 </svg>
                 Video Consultation
               </h2>
-              <button @click="toggleZoomInterface" class="bg-white bg-opacity-20 text-white px-2 py-1 rounded text-sm flex items-center hover:bg-opacity-30">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Close
-              </button>
             </div>
             <div class="flex-grow p-0">
-              <!-- Updated Zoom iframe with enhanced permissions -->
+              <!-- Enhanced Zoom iframe with all possible permissions -->
               <iframe 
                 :src="zoomEmbedUrl" 
-                allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write; clipboard-read"
-                sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                allow="camera *; microphone *; autoplay *; display-capture *; fullscreen *; picture-in-picture *; clipboard-write; clipboard-read; web-share"
+                sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
                 class="w-full h-full border-0"
                 style="min-height: 400px;" 
                 referrerpolicy="origin"
+                importance="high"
                 frameborder="0">
               </iframe>
+              
+              <!-- Permission check and request button -->
+              <div class="p-2 bg-blue-50 text-sm border-t">
+                <div class="flex items-center justify-between">
+                  <span class="text-blue-700">Camera/Microphone access:</span>
+                  <button @click="requestMediaPermissions" 
+                          class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs">
+                    Check/Request Permissions
+                  </button>
+                </div>
+              </div>
               
               <!-- Fallback option for Zoom meetings -->
               <div class="p-2 bg-gray-100 text-sm text-center">
@@ -179,18 +178,12 @@
           </div>
         </div>
         
-        <!-- Placeholder for when Zoom is not shown -->
-        <div v-if="!showZoomInterface" class="bg-white rounded-lg shadow overflow-hidden flex items-center justify-center p-6">
+        <!-- Loading state for when Zoom meeting is not yet created -->
+        <div v-if="!zoomMeeting?.join_url" class="bg-white rounded-lg shadow overflow-hidden flex items-center justify-center p-6 h-full">
           <div class="text-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-blue-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            <h3 class="text-lg font-medium text-gray-700 mb-2">Video Consultation</h3>
-            <p class="text-gray-500 mb-4">Click the "Start Video Consultation" button to begin video call with the patient.</p>
-            <button @click="toggleZoomInterface" 
-                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
-              Start Video Call
-            </button>
+            <div class="animate-spin rounded-full h-10 w-10 border-t-4 border-b-4 border-blue-500 mb-4 mx-auto"></div>
+            <h3 class="text-lg font-medium text-gray-700 mb-2">Preparing Video Call</h3>
+            <p class="text-gray-500">Setting up your Zoom consultation...</p>
           </div>
         </div>
       </div>
@@ -282,7 +275,8 @@
 import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
-import { appointmentApi, patientApi, zoomApi } from '@/services/api.js'
+import { appointmentApi, patientApi } from '@/services/api.js'
+import { zoomApi } from '@/services/zoomApi.js'
 
 const store = useStore()
 const route = useRoute()
@@ -306,27 +300,62 @@ let leaveNext = null // hold the next() function if user confirms
 
 // Zoom integration
 const zoomMeeting = ref(null)
-const showZoomInterface = ref(false)
+// Removed showZoomInterface ref since we always show it now
 
-// Updated computed property for proper Zoom embedding
+// Enhanced computed property for Zoom embedding
 const zoomEmbedUrl = computed(() => {
   if (!zoomMeeting.value?.join_url) return '';
   
-  // Extract the meeting ID and add necessary parameters
+  // Extract the meeting ID
   let meetingId = '';
   if (zoomMeeting.value.id) {
     meetingId = zoomMeeting.value.id;
   } else if (zoomMeeting.value.join_url) {
-    // Extract meeting ID from join URL if needed
     const matches = zoomMeeting.value.join_url.match(/\/j\/(\d+)/);
     if (matches && matches[1]) {
       meetingId = matches[1];
     }
   }
   
-  // Use web client embedding with full parameters
-  return `https://zoom.us/wc/join/${meetingId}?pwd=${zoomMeeting.value.password}&browser=chrome&embedded=true&enableAudioLabelForBrowserConnect=true&zc=true`;
+  // Enhanced URL with more parameters
+  return `https://zoom.us/wc/join/${meetingId}?pwd=${zoomMeeting.value.password
+  }&browser=chrome
+  &embedded=true
+  &enableAudioLabelForBrowserConnect=true
+  &webclient=true
+  &zc=true
+  &ievent=1
+  &needPasscode=false
+  &siteurl=zoom.us
+  &prefer=2
+  &showNoJBDeviceWarning=false
+  &disableUserMedia=false`.replace(/\s+/g, '');
 });
+
+// Function to explicitly request camera and microphone permissions
+const requestMediaPermissions = async () => {
+  try {
+    // First request camera
+    await navigator.mediaDevices.getUserMedia({ video: true });
+    
+    // Then request microphone
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+    
+    popupMessage.value = '✅ Camera and microphone access granted! Please refresh the Zoom interface.';
+    
+    // Optional: reload the iframe to apply permissions
+    const iframe = document.querySelector('iframe');
+    if (iframe) {
+      const src = iframe.src;
+      iframe.src = '';
+      setTimeout(() => {
+        iframe.src = src;
+      }, 100);
+    }
+  } catch (err) {
+    popupMessage.value = '❌ Permission denied or error: ' + err.message;
+  }
+};
 
 const handleBeforeUnload = (event) => {
   if (!consultationFinished.value) {
@@ -358,7 +387,7 @@ const fetchAppointment = async () => {
     const patientData = await patientApi.getPatientInfo(response.patient_id)
     patient.value = patientData
     
-    // Initialize Zoom meeting for demo
+    // Initialize Zoom meeting immediately
     createZoomMeeting()
 
   } catch (err) {
@@ -368,16 +397,7 @@ const fetchAppointment = async () => {
   }
 }
 
-const toggleZoomInterface = () => {
-  if (!zoomMeeting.value && !showZoomInterface.value) {
-    createZoomMeeting().then(() => {
-      showZoomInterface.value = true
-    })
-  } else {
-    showZoomInterface.value = !showZoomInterface.value
-  }
-}
-
+// Modified to remove toggle functionality - just creates the meeting
 const createZoomMeeting = async () => {
   try {
     const meeting = await zoomApi.createZoomMeeting({
