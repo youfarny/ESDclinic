@@ -15,8 +15,92 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Initialize Swagger
-swagger = Swagger(app)
-
+swagger = Swagger(app, template={
+    "swagger": "2.0",
+    "info": {
+        "title": "SMUDOC Patient API",
+        "description": "API documentation for managing patient data in SMUDOC",
+        "version": "1.0.0"
+    },
+    "basePath": "/",
+    "schemes": ["http"],
+    "definitions": {
+        "Patient": {
+            "type": "object",
+            "properties": {
+                "patient_id": {"type": "integer", "example": 1},
+                "patient_name": {"type": "string", "example": "John Doe"},
+                "patient_password": {"type": "string", "example": "secure123"},
+                "patient_contact": {"type": "integer", "example": 98765432},
+                "patient_address": {"type": "string", "example": "123 Main St"},
+                "patient_insurance": {"type": "boolean", "example": True},
+                "patient_allergies": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "example": ["Peanuts", "Shellfish"]
+                },
+                "patient_age": {"type": "integer", "example": 30}
+            }
+        },
+        "AuthenticationResponse": {
+            "type": "object",
+            "properties": {
+                "patient_id": {"type": "integer"},
+                "patient_name": {"type": "string"}
+            }
+        },
+        "ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {"type": "string"}
+            }
+        },
+        "CreatePatientRequest": {
+            "type": "object",
+            "required": ["patient_name", "patient_contact", "patient_address", "patient_password", "patient_age"],
+            "properties": {
+                "patient_name": {"type": "string"},
+                "patient_contact": {"type": "integer"},
+                "patient_address": {"type": "string"},
+                "patient_password": {"type": "string"},
+                "patient_insurance": {"type": "boolean"},
+                "patient_allergies": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "patient_age": {"type": "integer"}
+            }
+        },
+        "UpdatePatientRequest": {
+            "type": "object",
+            "properties": {
+                "patient_name": {"type": "string"},
+                "patient_contact": {"type": "integer"},
+                "patient_address": {"type": "string"},
+                "patient_password": {"type": "string"},
+                "patient_insurance": {"type": "boolean"},
+                "patient_allergies": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "patient_age": {"type": "integer"}
+            }
+        },
+        "MessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {"type": "string"},
+                "patient_id": {"type": "integer"}
+            }
+        },
+        "DeleteResponse": {
+            "type": "object",
+            "properties": {
+                "message": {"type": "string"}
+            }
+        }
+    }
+})
 class Patient(db.Model):
     __tablename__ = 'patient'
 

@@ -13,8 +13,34 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Initialize Swagger
-swagger = Swagger(app)
 
+swagger = Swagger(app, template={
+    "swagger": "2.0",
+    "info": {
+        "title": "SMUDOC Appointment API",
+        "description": "API documentation for managing appointments in the SMUDOC",
+        "version": "1.0.0"
+    },
+    "basePath": "/",
+    "schemes": ["http"],
+    "definitions": {
+        "Appointment": {
+            "type": "object",
+            "properties": {
+                "appointment_id": {"type": "integer"},
+                "patient_id": {"type": "integer"},
+                "doctor_id": {"type": "integer"},
+                "patient_symptoms": {"type": "object"},
+                "notes": {"type": "object"},
+                "start_time": {"type": "string", "format": "date-time"},
+                "end_time": {"type": "string", "format": "date-time"},
+                "diagnosis": {"type": "string"},
+                "prescription_id": {"type": "integer"},
+                "payment_id": {"type": "integer"}
+            }
+        }
+    }
+})
 # Appointment Model
 class Appointment(db.Model):
     __tablename__ = 'appointment'
