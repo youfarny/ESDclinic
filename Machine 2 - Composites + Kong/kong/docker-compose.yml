@@ -24,7 +24,7 @@ services:
     #   - kong-postgres
     environment:
       KONG_DATABASE: postgres
-      KONG_PG_HOST: 116.15.73.191
+      KONG_PG_HOST: 202.166.134.237
       KONG_PG_USER: admin
       KONG_PG_PASSWORD: ESD213password!
       KONG_PG_DATABASE: kong
