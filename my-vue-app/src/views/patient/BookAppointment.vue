@@ -28,7 +28,7 @@
     <!-- Symptoms Input -->
     <textarea
       v-model="symptoms"
-      placeholder='Enter symptoms like ["Fever", "Headache"]'
+      placeholder='Enter symptoms like: Fever, Headache'
       class="w-full border p-2 rounded resize-y font-mono text-sm mb-4"
     ></textarea>
 
