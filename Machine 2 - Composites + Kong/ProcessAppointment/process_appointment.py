@@ -217,6 +217,8 @@ def process_appointment_new():
 
                 # A3 B3 Request doctor_name using doctor_id
                 # A4 B4 Return doctor_name
+                print("\n\n")
+                print("------------------------------STEP A3 & A4 / B3 & B4------------------------------")
                 doctor_info = invoke_http(f"https://personal-73tajzpf.outsystemscloud.com/Doctor_service/rest/DoctorAPI/doctor/byid?doctor_id={selected_doctor_id}", method='GET')
                 doctor_name = doctor_info["Doctor"][0]["doctor_name"]
                 print(f"Assigned Doctor Name: {doctor_name}")

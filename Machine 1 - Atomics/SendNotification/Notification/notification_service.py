@@ -57,7 +57,7 @@ def get_queue_next(doctor_id):
     else:
         # Handle error
         print(f"Failed to read queue: {response.text}")
-        return None
+        return None, None
 
 
 app = Flask(__name__)
@@ -225,23 +225,28 @@ def callback(ch, method, properties, body):
         print(f"NEXT APPOINTMENT_ID: {appointment_id}")
         print(f"NEXT PATIENT_CONTACT: {patient_contact}")
 
-        message = craft_message(appointment_type)
-        print(f"MESSAGE: {message}")
+        if (appointment_id == None and patient_contact == None):
+            message = "No patients in queue"
+            print(message)
 
-        patient_contact = "+65" + str(patient_contact)
+        else:
+            message = craft_message(appointment_type)
+            print(f"MESSAGE: {message}")
 
-        print("\n\n")
-        print("------------------------------STEP 29------------------------------")
-        try:
-            msg = client.messages.create(
-                body=message,
-                from_=TWILIO_PHONE_NUMBER,
-                to=patient_contact
-            )
-            print(f"Message sent to {patient_contact}: {msg.sid}")
+            patient_contact = "+65" + str(patient_contact)
 
-        except Exception as e:
-            print(f"Failed to send message to {patient_contact}: {e}")
+            print("\n\n")
+            print("------------------------------STEP 29------------------------------")
+            try:
+                msg = client.messages.create(
+                    body=message,
+                    from_=TWILIO_PHONE_NUMBER,
+                    to=patient_contact
+                )
+                print(f"Message sent to {patient_contact}: {msg.sid}")
+
+            except Exception as e:
+                print(f"Failed to send message to {patient_contact}: {e}")
 
         # No AMQP response is sent here, only acknowledge.
         ch.basic_ack(delivery_tag=method.delivery_tag)
