@@ -18,8 +18,56 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Initialize Swagger
-swagger = Swagger(app)
-
+swagger = Swagger(app, template={
+    "swagger": "2.0",
+    "info": {
+        "title": "SMUDOC Payment API",
+        "description": "API documentation for managing payments in SMUDOC",
+        "version": "1.0.0"
+    },
+    "basePath": "/",
+    "schemes": ["http"],
+    "definitions": {
+        "Payment": {
+            "type": "object",
+            "properties": {
+                "payment_id": {
+                    "type": "integer",
+                    "example": 1,
+                    "description": "Unique ID for the payment"
+                },
+                "appointment_id": {
+                    "type": "integer",
+                    "example": 101,
+                    "description": "Associated appointment ID"
+                },
+                "payment_status": {
+                    "type": "boolean",
+                    "example": False,
+                    "description": "Payment status: false (not paid), true (paid)"
+                },
+                "payment_amount": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 99.99,
+                    "description": "Amount for the payment"
+                },
+                "insurance": {
+                    "type": "boolean",
+                    "example": True,
+                    "description": "Whether insurance was used"
+                }
+            },
+            "required": ["appointment_id", "payment_amount", "insurance"]
+        }
+    },
+    "tags": [
+        {
+            "name": "Payment",
+            "description": "Operations related to payment processing"
+        }
+    ]
+})
 class Payment(db.Model):
     __tablename__ = 'payment'
     

@@ -12,7 +12,40 @@ db = SQLAlchemy(app)
 with app.app_context():
     db.create_all()
 
-swagger = Swagger(app)
+swagger = Swagger(app, template={
+    "swagger": "2.0",
+    "info": {
+        "title": "SMUDOC Doctor API",
+        "description": "API documentation for managing doctors in SMUDOC",
+        "version": "1.0.0"
+    },
+    "basePath": "/",
+    "schemes": ["http"],
+    "definitions": {
+        "Doctor": {
+            "type": "object",
+            "properties": {
+                "doctor_id": {
+                    "type": "integer",
+                    "example": 1,
+                    "description": "The doctor ID"
+                },
+                "doctor_name": {
+                    "type": "string",
+                    "example": "Dr. John Doe",
+                    "description": "The name of the doctor"
+                }
+            },
+            "required": ["doctor_name"]
+        }
+    },
+    "tags": [
+        {
+            "name": "Doctor",
+            "description": "Operations related to managing doctors"
+        }
+    ]
+})
 
 
 class Doctor(db.Model):
