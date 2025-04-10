@@ -442,7 +442,7 @@ def process_appointment_start():
     print("\n\n")
     print("!!!------------------------------NEW REQUEST TO /process/start------------------------------!!!")
     gmt_plus_8 = timezone(timedelta(hours=8))
-    start_time = datetime.now(gmt_plus_8).isoformat()
+    start_time = datetime.now(gmt_plus_8).strftime('%Y-%m-%d %H:%M:%S')
     print(start_time)
 
 
@@ -762,7 +762,7 @@ def process_appointment_end():
     print("\n\n")
     print("!!!------------------------------NEW REQUEST TO /process/end------------------------------!!!")
     gmt_plus_8 = timezone(timedelta(hours=8))
-    end_time = datetime.now(gmt_plus_8).isoformat()
+    end_time = datetime.now(gmt_plus_8).strftime('%Y-%m-%d %H:%M:%S')
     print(end_time)
 
     # 19 UI sends appointment info at end of appointment

@@ -112,12 +112,12 @@ const loadAppointments = async () => {
             appointment_id: appt.appointment_id,
           })
 
-          const { payment_amount, payment_id, payment_status } = calc.data.data || {}
+          const { payment_amount, payment_status } = calc.data.data || {}
 
           const enriched = {
             ...appt,
             total_cost: payment_amount ?? 'N/A',
-            payment_id: payment_id ?? null,
+            // payment_id: payment_id ?? null,
             payment_status: payment_status ?? 0,
           }
 
