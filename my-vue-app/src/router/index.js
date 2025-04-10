@@ -43,10 +43,6 @@ const routes = [
     component: MedicalRecords,
     meta: { requiresAuth: true, role: 'patient' }
   },
-<<<<<<< HEAD
-
-=======
->>>>>>> b65bb0b54a38f82e618b7eb17131c5bd5d42fd4a
 
   // doctor routes
   {

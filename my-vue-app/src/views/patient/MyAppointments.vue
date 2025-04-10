@@ -13,6 +13,7 @@
   class="border p-4 mb-4 rounded flex justify-between items-center"
 >
   <div>
+    <p><strong>Appointment ID:</strong> {{ appt.appointment_id }}</p>
     <p><strong>Doctor ID:</strong> {{ appt.doctor_id }}</p>
     <p><strong>Start Time:</strong> {{ appt.start_time || 'N/A' }}</p>
     <p><strong>End Time:</strong> {{ appt.end_time || 'N/A' }}</p>
@@ -21,7 +22,11 @@
     <p><strong>Status:</strong> {{ appt.payment_id === null ? 'Unpaid' : 'Paid' }}</p>
   </div>
 
-  <div v-if="appt.payment_id === null">
+  
+  <div v-if="appt.payment_id !== null" class="text-green-600 font-bold">
+    ✅ Paid
+  </div>
+  <div v-else="appt.payment_id_new &&appt.payment_id === null">
     <button
       @click="goToStripe(appt)"
       class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
@@ -30,9 +35,8 @@
     </button>
   </div>
 
-  <div v-else="appt.payment_status !== 0" class="text-green-600 font-bold">
-    ✅ Paid
-  </div>
+  
+  
   
 </div>
 </template>
@@ -65,7 +69,7 @@ const patientId = patient?.patient_id
 onMounted(async () => {
   const query = new URLSearchParams(window.location.search)
   const paymentSuccess = query.get('payment') === 'success'
-  const paymentId = query.get('payment_id')
+  const paymentId = query.get('payment_id_new')
   const appointmentId = query.get('appointment_id')
   console.log("💡 Query Params:", { paymentSuccess, paymentId, appointmentId })
 
@@ -112,12 +116,14 @@ const loadAppointments = async () => {
             appointment_id: appt.appointment_id,
           })
 
-          const { payment_amount, payment_status } = calc.data.data || {}
+          console.log(calc.data.data || {})
+
+          const { payment_amount, payment_id, payment_status } = calc.data.data || {}
 
           const enriched = {
             ...appt,
             total_cost: payment_amount ?? 'N/A',
-            // payment_id: payment_id ?? null,
+            payment_id_new: payment_id ?? null,
             payment_status: payment_status ?? 0,
           }
 
@@ -140,12 +146,12 @@ const loadAppointments = async () => {
 
 
 const goToStripe = async (appt) => {
-  console.log("🔁 Stripe success_url being sent:", `http://localhost:5173/patient/my-appointments?payment=success&appointment_id=${appt.appointment_id}&payment_id=${appt.payment_id}`);
+  console.log("🔁 Stripe success_url being sent:", `http://localhost:5173/patient/my-appointments?payment=success&appointment_id=${appt.appointment_id}&payment_id_new=${appt.payment_id_new}`);
 
   try {
     const payload = {
       mode: "payment",
-      success_url: `http://localhost:5173/patient/my-appointments?payment=success&appointment_id=${appt.appointment_id}&payment_id=${appt.payment_id}`,
+      success_url: `http://localhost:5173/patient/my-appointments?payment=success&appointment_id=${appt.appointment_id}&payment_id_new=${appt.payment_id_new}`,
       cancel_url: `http://localhost:5173/patient/my-appointments`,
       currency: "usd",
       product_name: `Appointment #${appt.appointment_id}`,
