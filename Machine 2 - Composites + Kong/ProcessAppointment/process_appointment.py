@@ -496,8 +496,8 @@ def process_appointment_start():
 
 
 
-        # 5 Get full appointment details {appointment_id}
-        # 6 Return appointment details {...}
+        # 6 Get full appointment details {appointment_id}
+        # 7 Return appointment details {...}
         print("\n\n")
         print("------------------------------STEP 6 & 7------------------------------")
         print(f"Fetching details for appointment_id: {appointment_id}")
@@ -523,8 +523,8 @@ def process_appointment_start():
 
 
 
-        # 7 Patient allergies {patient_id}
-        # 8 Return patient allergies {patient_id, patient_allergies}
+        # 8 Patient allergies {patient_id}
+        # 9 Return patient allergies {patient_id, patient_allergies}
         print("\n\n")
         print("------------------------------STEP 8 & 9------------------------------")
         print(f"Fetching allergies for patient_id: {patient_id}")
@@ -545,8 +545,8 @@ def process_appointment_start():
 
 
 
-        # 9 Send symptoms to AI {patient_symptoms}
-        # 10 Return recommendations {diagnoses}
+        # 10 Send symptoms to AI {patient_symptoms}
+        # 11 Return recommendations {diagnoses}
         print("\n\n")
         print("------------------------------STEP 10 & 11------------------------------")
         patient_symptoms = appointment_data.get("patient_symptoms", "Unknown symptoms")
@@ -574,7 +574,7 @@ def process_appointment_start():
 
 
 
-        # 11 Update appointment {appointment_id, notes}
+        # 12 Update appointment {appointment_id, notes}
         print("\n\n")
         print("------------------------------STEP 12 & 13------------------------------")
         
@@ -606,7 +606,7 @@ def process_appointment_start():
         
 
 
-        # 13 & 14 Zoom
+        # 14 & 15 Zoom
         print("\n\n")
         print("------------------------------STEP 14 & 15------------------------------")
 
@@ -618,7 +618,7 @@ def process_appointment_start():
 
 
 
-        # 15 Notification
+        # 16 Notification
         print("\n\n")
         print("------------------------------STEP 16------------------------------")
 
@@ -668,7 +668,7 @@ def process_appointment_start():
 
 
 
-        # 17 Return appointment details to the doctor
+        # 18 Return appointment details to the doctor
         print("\n\n")
         print("------------------------------STEP 18------------------------------")
         return jsonify({
@@ -764,7 +764,7 @@ def process_appointment_end():
     end_time = datetime.now(gmt_plus_8).isoformat()
     print(end_time)
 
-    # 18 Send appointment info at end of appointment
+    # 19 Send appointment info at end of appointment
     print("\n\n")
     print("------------------------------STEP 19------------------------------")
     try:
@@ -795,8 +795,8 @@ def process_appointment_end():
 
 
 
-        # 19 Get patient allergies {patient_id}
-        # 20 Return patient allergies {patient_id, allergies} 
+        # 20 Get patient allergies {patient_id}
+        # 21 Return patient allergies {patient_id, allergies} 
         # Verification for allergies
         print("\n\n")
         print("------------------------------STEP 20 & 21------------------------------")
@@ -829,8 +829,8 @@ def process_appointment_end():
 
 
 
-        # 21 Create new prescription {medicine}
-        # 22 Return prescription_id {prescription_id} 
+        # 22 Create new prescription {medicine}
+        # 23 Return prescription_id {prescription_id} 
         print("\n\n")
         print("------------------------------STEP 22 & 23------------------------------")
 
@@ -869,8 +869,8 @@ def process_appointment_end():
 
 
 
-        # 23 Update diagnosis / prescription in appointment {appointment_id, end_time, diagnosis, prescription_id}
-        # 24 Return success / failure {appointment_id, success} 
+        # 24 Update diagnosis / prescription in appointment {appointment_id, end_time, diagnosis, prescription_id}
+        # 25 Return success / failure {appointment_id, success} 
         print("\n\n")
         print("------------------------------STEP 24 & 25------------------------------")
 
@@ -905,7 +905,7 @@ def process_appointment_end():
 
 
 
-        # 25 Send Notification to next patient in queue
+        # 26 Send Notification to next patient in queue
         # {doctor_id} 
         print("\n\n")
         print("------------------------------STEP 26------------------------------")
@@ -961,7 +961,7 @@ def process_appointment_end():
 
 
 
-        # 26 Return success / failure {appointment_id, prescription_id, success} 
+        # 30 Return success / failure {appointment_id, prescription_id, success} 
         print("\n\n")
         print("------------------------------STEP 30------------------------------")
 
