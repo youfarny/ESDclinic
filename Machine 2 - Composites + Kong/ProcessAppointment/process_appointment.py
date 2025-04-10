@@ -442,7 +442,7 @@ def process_appointment_start():
     print("\n\n")
     print("!!!------------------------------NEW REQUEST TO /process/start------------------------------!!!")
     gmt_plus_8 = timezone(timedelta(hours=8))
-    start_time = datetime.now(gmt_plus_8).isoformat()
+    start_time = datetime.now(gmt_plus_8).strftime('%Y-%m-%d %H:%M:%S')
     print(start_time)
 
 
@@ -669,6 +669,7 @@ def process_appointment_start():
 
 
         # 16 Return appointment details to the doctor
+        # 16 Return appointment details to the doctor
         print("\n\n")
         print("------------------------------STEP 16------------------------------")
         return jsonify({
@@ -761,7 +762,7 @@ def process_appointment_end():
     print("\n\n")
     print("!!!------------------------------NEW REQUEST TO /process/end------------------------------!!!")
     gmt_plus_8 = timezone(timedelta(hours=8))
-    end_time = datetime.now(gmt_plus_8).isoformat()
+    end_time = datetime.now(gmt_plus_8).strftime('%Y-%m-%d %H:%M:%S')
     print(end_time)
 
     # 19 UI sends appointment info at end of appointment
@@ -773,6 +774,8 @@ def process_appointment_end():
         
         try:
             patient_id = data.get("patient_id")
+            if patient_id == None:
+                raise Exception()
         except:
             appointment_response = requests.get(f"{appointment_URL}/{appointment_id}")
             patient_id = appointment_response.get("patient_id")
@@ -1277,6 +1280,9 @@ def process_appointment_finish():
     print("\n\n")
     print("!!!------------------------------NEW REQUEST TO /process/finish------------------------------!!!")
 
+    print("\n\n")
+    print("------------------------------STEP 19------------------------------")
+
     if request.is_json:
         try:
             # Extract data from the request
@@ -1288,14 +1294,14 @@ def process_appointment_finish():
             # 18 Update payment_status in payment
            
             print("\n\n")
-            print("------------------------------STEP 18------------------------------")
+            print("------------------------------STEP 20 & 21------------------------------")
             patch_result = invoke_http(f"{payment_URL}", method='PATCH', json={"payment_id": payment_id})
             print("Patch result:", patch_result)
             
             # 19 Update payment_id in appointment 
            
             print("\n\n")
-            print("------------------------------STEP 19------------------------------")
+            print("------------------------------STEP 22 & 23------------------------------")
             payment_update_payload = {
                 "appointment_id": appointment_id,
                 "payment_id": payment_id
@@ -1303,7 +1309,11 @@ def process_appointment_finish():
             print(f"\nFetching appointment details for ID: {appointment_id}...")
             update_result = invoke_http(f"{appointment_URL}/payment", method='PATCH', json=payment_update_payload)
             print("Payment update result:", update_result)
-      
+
+
+
+            print("\n\n")
+            print("------------------------------STEP 24------------------------------")
 
             
             # Return payment details {payment_id, payment_amount}

@@ -10,7 +10,7 @@
             </svg>
           </div>
           <h1 class="text-2xl font-bold text-gray-800">Consultation</h1>
-        </div>
+        </div>  
         <div class="flex items-center">
           <!-- Zoom Button - toggles the video interface -->
           <button @click="toggleZoomInterface" 
@@ -282,8 +282,7 @@
 import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
-import { appointmentApi, patientApi } from '@/services/api.js'
-import { zoomApi } from '@/services/zoomApi.js'
+import { appointmentApi, patientApi, zoomApi } from '@/services/api.js'
 
 const store = useStore()
 const route = useRoute()
@@ -419,7 +418,7 @@ const submitConsultation = async () => {
       
       // Wait a moment and then redirect
       setTimeout(() => {
-        router.push('/doctor')
+        router.push('/doctor/dashboard')
       }, 2000)
     } else {
       popupMessage.value = `❌ Submission failed: ${response.message}`
@@ -454,25 +453,10 @@ const cancelLeave = () => {
 onMounted(() => {
   fetchAppointment()
   window.addEventListener('beforeunload', handleBeforeUnload)
-  
-  // Add meta tag for Content Security Policy
-  const meta = document.createElement('meta');
-  meta.httpEquiv = "Content-Security-Policy";
-  meta.content = "frame-src https://zoom.us https://*.zoom.us; connect-src https://zoom.us https://*.zoom.us; script-src 'self' https://zoom.us https://*.zoom.us 'unsafe-inline'; style-src 'self' https://zoom.us https://*.zoom.us 'unsafe-inline';";
-  document.head.appendChild(meta);
 })
 
 // Clean up when component unmounts
 onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
-  
-  // Remove the added meta tag
-  const metaTags = document.head.getElementsByTagName('meta');
-  for (let i = 0; i < metaTags.length; i++) {
-    if (metaTags[i].httpEquiv === "Content-Security-Policy") {
-      document.head.removeChild(metaTags[i]);
-      break;
-    }
-  }
 })
 </script>
