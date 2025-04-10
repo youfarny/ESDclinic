@@ -15,11 +15,11 @@ CREATE TABLE `patient`.`patient` (
   -- Insert fake patients
 INSERT INTO `patient`.`patient` (patient_name, patient_password, patient_contact, patient_address, patient_insurance, patient_allergies, patient_age)
 VALUES 
-('John Doe', 'password', 987654321, '123 Main St', 1, '["Ibuprofen"]', 13),
-('Jane Smith', 'password', 876543210, '456 Oak St', 0, '["None"]', 15),
-('Alice Johnson', 'password', 765432109, '789 Pine St', 1, '["Antihistamines"]', 57),
-('Bob Williams', 'password', 654321098, '101 Maple St', 0, '["Paracetamol"]', 3),
-('Emily Brown', 'password', 543210987, '202 Birch St', 1, '["None"]', 109);
+('John Doe', 'password', 97208453, '123 Main St', 1, '["Ibuprofen"]', 13),
+('Jane Smith', 'password', 97208453, '456 Oak St', 0, '["None"]', 15),
+('Alice Johnson', 'password', 97208453, '789 Pine St', 1, '["Antihistamines"]', 57),
+('Bob Williams', 'password', 97208453, '101 Maple St', 0, '["Paracetamol"]', 3),
+('Emily Brown', 'password', 97208453, '202 Birch St', 1, '["None"]', 109);
   
 DROP DATABASE IF EXISTS queue;  
 CREATE DATABASE `queue` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
@@ -33,11 +33,11 @@ CREATE TABLE `queue`.`queue` (
   -- Insert fake queue
 INSERT INTO `queue`.`queue` (appointment_id, doctor_id, patient_contact)
 VALUES 
-(1, 1, 12345678),
-(2, 2, 12345678),
-(3, 3, 12345678),
-(4, 1, 12345678),
-(5, 2, 12345678);
+(1, 1, 97208453),
+(2, 2, 97208453),
+(3, 3, 97208453),
+(4, 1, 97208453),
+(5, 2, 97208453);
 
 DROP DATABASE IF EXISTS appointment;  
 CREATE DATABASE `appointment` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;

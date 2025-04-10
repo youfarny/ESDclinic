@@ -146,7 +146,12 @@ def process_appointment_new():
 
             patient_id = appointment_data.get("patient_id")
             request_doctor = appointment_data.get("request_doctor", "").strip()
-            patient_contact = appointment_data.get("patient_contact")
+            try:
+              patient_contact = appointment_data.get("patient_contact")
+            except:
+              patient_response = requests.get(f"{patient_URL}/{patient_id}")
+              patient_contact = patient_response.get("patient_contact")
+
             patient_symptoms = appointment_data.get("patient_symptoms")
 
             if not patient_id:
