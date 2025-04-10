@@ -12,7 +12,7 @@ TWILIO_PHONE_NUMBER = '+12723155371'
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 # RabbitMQ settings
-RABBITMQ_HOST = '116.15.73.191'  # Your on-prem RabbitMQ IP
+RABBITMQ_HOST = '202.166.134.237'  # Your on-prem RabbitMQ IP
 RABBITMQ_PORT = 5672  # AMQP port
 QUEUE_NAME = 'sms_queue'
 

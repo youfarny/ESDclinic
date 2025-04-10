@@ -6,7 +6,7 @@ import threading
 import requests
 from invokes import invoke_http
 
-queue_url = "http://116.15.73.191:5103/queue"
+queue_url = "http://202.166.134.237:5103/queue"
 
 #Queue logic
 def create_appointment_and_get_queue_length(doctor_id, patient_contact,appointment_id):
@@ -71,7 +71,7 @@ TWILIO_PHONE_NUMBER = '+12723155371'
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 # RabbitMQ Connection
-RABBITMQ_HOST = '116.15.73.191'  # Your on-prem RabbitMQ IP
+RABBITMQ_HOST = '202.166.134.237'  # Your on-prem RabbitMQ IP
 RABBITMQ_PORT = 5672  # AMQP port
 QUEUE_NAME = 'notification_queue'
 
