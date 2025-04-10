@@ -2,7 +2,12 @@
     <div class="success-message">
       <h1>🎉 Payment Successful!</h1>
       <p>Your appointment has been confirmed.</p>
-      <router-link to="/patient/appointments">Back to Appointments</router-link>
+      <h1>
+  <router-link to="/patient/dashboard" class="text-blue-600 hover:underline">
+    Back to Dashboard
+  </router-link>
+</h1>
+
     </div>
   </template>
   

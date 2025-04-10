@@ -2,18 +2,12 @@
   <div class="p-6 max-w-xl mx-auto">
     <h1 class="text-2xl font-bold mb-4">Book an Appointment</h1>
 
-    <!-- Selection Type -->
+    <!-- Doctor Selection -->
     <div class="mb-4">
       <label class="font-semibold block mb-2">Choose a Doctor:</label>
-      <label class="block">
-        <input type="radio" value="shortest" v-model="selection" /> Shortest Queue Doctor
-      </label>
-      <label class="block">
-        <input type="radio" value="previous" v-model="selection" /> Previous Doctor
-      </label>
-      <label class="block">
-        <input type="radio" value="custom" v-model="selection" /> Choose Specific Doctor
-      </label>
+      <label class="block"><input type="radio" value="shortest" v-model="selection" /> Shortest Queue Doctor</label>
+      <label class="block"><input type="radio" value="previous" v-model="selection" /> Previous Doctor</label>
+      <label class="block"><input type="radio" value="custom" v-model="selection" /> Choose Specific Doctor</label>
     </div>
 
     <!-- Display Selected Doctor Info -->
@@ -25,20 +19,20 @@
     <div v-if="selection === 'custom'" class="mb-4">
       <select v-model="doctorId" class="w-full p-2 border rounded">
         <option disabled value="">Select a Doctor</option>
-        <option v-for="doc in doctors" :key="doc.id" :value="doc.id">
+        <option v-for="doc in doctors" :key="doc.id" :value="doc.name">
           {{ doc.id }} - {{ doc.name }}
         </option>
       </select>
     </div>
 
-    <!-- Symptoms -->
+    <!-- Symptoms Input -->
     <textarea
       v-model="symptoms"
       placeholder='Enter symptoms like ["Fever", "Headache"]'
       class="w-full border p-2 rounded resize-y font-mono text-sm mb-4"
     ></textarea>
 
-    <!-- Book Button -->
+    <!-- Submit -->
     <button @click="bookAppointment" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
       Book Appointment
     </button>
@@ -46,118 +40,199 @@
     <p v-if="message" class="text-green-600 mt-4">{{ message }}</p>
     <p v-if="error" class="text-red-600 mt-4">{{ error }}</p>
   </div>
-</template>
+</template><script setup>
+import { ref, onMounted, watch } from 'vue'
+import axios from 'axios'
 
-<script setup>
-import { ref, onMounted, watch } from 'vue';
+const selection = ref('')
+const doctorId = ref('')
+const doctors = ref([])
+const symptoms = ref('')
+const message = ref('')
+const error = ref('')
+const selectedDoctorName = ref('')
 
-const selection = ref('custom');
-const doctorId = ref('');
-const doctors = ref([]);
-const symptoms = ref('');
-const message = ref('');
-const error = ref('');
-const selectedDoctorName = ref('');
-
-let patient = {};
+let patient = {}
 try {
-  patient = JSON.parse(localStorage.getItem('patient')) || {};
+  patient = JSON.parse(localStorage.getItem('patient')) || {}
 } catch {
-  patient = {};
+  patient = {}
 }
-const patientId = patient?.patient_id;
+const patientId = patient?.patient_id
+const patientContact = "97208453"  // Set default contact number
 
-// Fetch all doctors for custom dropdown
+// Fetch doctor list
 onMounted(async () => {
-  const temp = [];
+  const temp = []
   for (let id = 1; id <= 3; id++) {
     try {
-      const res = await fetch(`http://localhost:8000/doctor/byid?doctor_id=${id}&apikey=admin`);
-      const data = await res.json();
+      const res = await fetch(`http://localhost:8000/doctor/byid?doctor_id=${id}&apikey=admin`)
+      const data = await res.json()
       if (data.Doctor?.length > 0) {
-        temp.push({ id: data.Doctor[0].doctor_id, name: data.Doctor[0].doctor_name });
+        temp.push({ id: data.Doctor[0].doctor_id, name: data.Doctor[0].doctor_name })
       }
     } catch (err) {
-      console.error(`Error fetching doctor ${id}:`, err);
+      console.error(`Error fetching doctor ${id}:`, err)
     }
   }
-  doctors.value = temp;
-});
+  doctors.value = temp
+})
 
-// Show doctor name based on selected option
+// Handle doctor name display logic
 watch([selection, doctorId], async () => {
-  error.value = '';
-  selectedDoctorName.value = '';
+  error.value = ''
+  selectedDoctorName.value = ''
+  
+  if (!selection.value) {
+    return  // Don't show any doctor if no selection made
+  }
 
   if (selection.value === 'shortest') {
     try {
-      const res = await fetch('http://127.0.0.1:8000/queue/shortest?apikey=admin');
-      const data = await res.json();
-      doctorId.value = data.doctor_id;
-
-      const doc = doctors.value.find(d => d.id === data.doctor_id);
-      selectedDoctorName.value = doc ? `${doc.id} - ${doc.name}` : `Doctor ID ${data.doctor_id}`;
-    } catch {
-      error.value = 'Failed to fetch shortest queue doctor';
-    }
-  }
-
-  if (selection.value === 'previous') {
-    try {
-      const res = await fetch(`http://127.0.0.1:8000/appointment/records/${patientId}?apikey=admin`);
-      const data = await res.json();
-      if (data.length > 0) {
-        doctorId.value = data[data.length - 1].doctor_id;
-        const doc = doctors.value.find(d => d.id === doctorId.value);
-        selectedDoctorName.value = doc ? `${doc.id} - ${doc.name}` : `Doctor ID ${doctorId.value}`;
-      } else {
-        error.value = 'No previous appointments found';
+      const res = await fetch('http://127.0.0.1:8000/queue/shortest?apikey=admin')
+      const data = await res.json()
+      if (data.doctor_id) {
+        const doc = doctors.value.find(d => d.id === data.doctor_id)
+        doctorId.value = doc?.name || ''
+        selectedDoctorName.value = doc ? `${doc.id} - ${doc.name}` : `Doctor ID ${data.doctor_id}`
       }
     } catch {
-      error.value = 'Failed to fetch previous doctor';
+      error.value = 'Failed to fetch shortest queue doctor'
+    }
+  } else if (selection.value === 'previous') {
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/appointment/records/${patientId}?apikey=admin`)
+      const data = await res.json()
+      if (data && data.length > 0) {
+        // Sort appointments by date in descending order, using created_time as fallback
+        const sortedAppointments = data.sort((a, b) => {
+  const idA = a.appointment_id || 0
+  const idB = b.appointment_id || 0
+  return idB - idA // sort by appointment_id descending
+})
+
+       
+
+        const lastAppointment = sortedAppointments[0]
+        const lastDoctorId = lastAppointment.doctor_id
+        
+        // Fetch doctor name for the last appointment
+        try {
+          const doctorRes = await fetch(`http://localhost:8000/doctor/byid?doctor_id=${lastDoctorId}&apikey=admin`)
+          const doctorData = await doctorRes.json()
+          if (doctorData.Doctor?.length > 0) {
+            const doctor = doctorData.Doctor[0]
+            doctorId.value = doctor.doctor_id
+            selectedDoctorName.value = `${doctor.doctor_id} - ${doctor.doctor_name}`
+          }
+        } catch (err) {
+          console.error('Error fetching doctor details:', err)
+          error.value = 'Failed to fetch previous doctor details'
+        }
+      } else {
+        error.value = 'No previous appointments found'
+      }
+    } catch (err) {
+      console.error('Error fetching previous appointments:', err)
+      error.value = 'Failed to fetch previous doctor'
+    }
+  } else if (selection.value === 'custom') {
+    if (doctorId.value) {
+      const selectedDoctor = doctors.value.find(d => d.name === doctorId.value)
+      if (selectedDoctor) {
+        selectedDoctorName.value = `${selectedDoctor.id} - ${selectedDoctor.name}`
+      }
     }
   }
+})
 
-  if (selection.value === 'custom') {
-    const doc = doctors.value.find(d => d.id === doctorId.value);
-    selectedDoctorName.value = doc ? `${doc.id} - ${doc.name}` : '';
+// Add this new function after the watch block
+const refreshDoctorSelection = async () => {
+  if (selection.value === 'previous') {
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/appointment/records/${patientId}?apikey=admin`)
+      const data = await res.json()
+      if (data.length > 0) {
+        // Sort appointments by date in descending order
+        const sortedAppointments = data.sort((a, b) => new Date(b.start_time) - new Date(a.start_time))
+        const lastAppointment = sortedAppointments[0]
+        doctorId.value = lastAppointment.doctor_id
+        
+        // Fetch doctor name for the last appointment
+        try {
+          const doctorRes = await fetch(`http://localhost:8000/doctor/byid?doctor_id=${doctorId.value}&apikey=admin`)
+          const doctorData = await doctorRes.json()
+          if (doctorData.Doctor?.length > 0) {
+            selectedDoctorName.value = `${doctorId.value} - ${doctorData.Doctor[0].doctor_name}`
+          } else {
+            selectedDoctorName.value = `Doctor ID ${doctorId.value}`
+          }
+        } catch (err) {
+          console.error('Error fetching doctor details:', err)
+          selectedDoctorName.value = `Doctor ID ${doctorId.value}`
+        }
+      }
+    } catch (err) {
+      console.error('Error refreshing doctor selection:', err)
+    }
   }
-});
+}
 
 const bookAppointment = async () => {
-  error.value = '';
-  message.value = '';
+  error.value = ''
+  message.value = ''
 
-  let parsedSymptoms;
+  if (!selection.value) {
+    error.value = 'Please select a doctor option'
+    return
+  }
+
+  let parsedSymptoms
   try {
-    parsedSymptoms = JSON.parse(symptoms.value);
-    if (!Array.isArray(parsedSymptoms)) throw new Error();
+    parsedSymptoms = JSON.parse(symptoms.value)
+    if (!Array.isArray(parsedSymptoms)) throw new Error()
   } catch {
-    error.value = 'Invalid symptom format. Use ["Fever", "Headache"]';
-    return;
+    error.value = 'Invalid symptom format. Use ["Fever", "Headache"]'
+    return
+  }
+
+  // Determine request_doctor value for composite service
+  let requestDoctor = ''
+  if (selection.value === 'previous') {
+    requestDoctor = 'same'
+  } else if (selection.value === 'custom') {
+    requestDoctor = doctorId.value // Use the selected doctor name directly
   }
 
   try {
-    const res = await fetch('http://116.15.73.191:5100/appointment/new', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        patient_id: Number(patientId),
-        doctor_id: Number(doctorId.value),
-        patient_symptoms: JSON.stringify(parsedSymptoms),
-      }),
-    });
+    console.log('Sending appointment request:', {
+      patient_id: patientId,
+      request_doctor: requestDoctor,
+      patient_symptoms: parsedSymptoms,
+      patient_contact: "97208453"
+    })
 
-    const text = await res.text();
-    const data = text ? JSON.parse(text) : {};
-    if (!res.ok) throw new Error(data.error || 'Failed to create appointment');
+    const res = await axios.post('http://localhost:8000/process/new', {
+      apikey: 'admin',
+      patient_id: patientId,
+      request_doctor: requestDoctor,
+      patient_symptoms: parsedSymptoms,
+      patient_contact: "97208453"
+    })
 
-    message.value = `Appointment created! ID: ${data.appointment_id}`;
-    doctorId.value = '';
-    symptoms.value = '';
-    selectedDoctorName.value = '';
+    const data = res.data.data
+    message.value = `Appointment #${data.appointment_id} created with ${data.doctor_name} (Queue length: ${data.queue_length})`
+    doctorId.value = ''
+    symptoms.value = ''
+    selection.value = ''  // Reset selection after booking
+
+    // Add a small delay to ensure the appointment is properly saved
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Refresh the doctor selection to show the most recent appointment
+    await refreshDoctorSelection()
   } catch (err) {
-    error.value = err.message || 'Unexpected error';
+    console.error('Error booking appointment:', err)
+    error.value = err.message || 'Failed to book appointment'
   }
-};
+}
 </script>

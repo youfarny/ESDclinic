@@ -1,137 +1,180 @@
 <template>
-  <div class="container mx-auto p-6">
+  <div class="p-6 max-w-4xl mx-auto">
     <h1 class="text-2xl font-bold mb-4">My Appointments</h1>
 
-    <!-- New Appointment Form -->
-    <!-- <div class="bg-white shadow p-4 rounded mb-8">
-      <h2 class="text-lg font-semibold mb-2">Create New Appointment</h2>
-      <div class="space-y-4">
-        <input
-          v-model="form.doctor_id"
-          type="number"
-          placeholder="Doctor ID"
-          class="w-full p-2 border rounded"
-        />
-        <textarea
-          v-model="form.symptoms"
-          placeholder="Describe your symptoms"
-          class="w-full p-2 border rounded"
-        ></textarea>
-        <button
-          @click="createAppointment"
-          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Book Appointment
-        </button>
-      </div>
-    </div> -->
+    <p v-if="error" class="text-red-600 mb-4">{{ error }}</p>
+    <p v-if="successMessage" class="text-green-600 mb-4">{{ successMessage }}</p>
 
-    <!-- Appointments List -->
-    <div>
-      <h2 class="text-lg font-semibold mb-4">Your Appointment History</h2>
-      <div v-if="loading" class="text-center text-gray-500">Loading...</div>
-      <div v-else-if="error" class="text-red-500">{{ error }}</div>
-      <div v-else-if="appointments.length === 0" class="text-gray-500">No appointments found.</div>
-      <div v-else class="space-y-4">
-        <div
-          v-for="appt in appointments"
-          :key="appt.appointment_id"
-          class="border p-4 rounded bg-white shadow"
-        >
-          <p><strong>Appointment ID:</strong> {{ appt.appointment_id }}</p>
-          <p><strong>Doctor ID:</strong> {{ appt.doctor_id }}</p>
-          <p><strong>Symptoms:</strong> {{ formatSymptoms(appt.patient_symptoms) }}</p>
-          <p><strong>Start Time:</strong> {{ appt.start_time || 'Not started' }}</p>
-          <p><strong>End Time:</strong> {{ appt.end_time || 'Not ended' }}</p>
-        </div>
+<!-- Back button after successful payment -->
+    <div v-if="successMessage">
+      <button
+        @click="goBack"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        Go Back to My Appointments
+      </button>
+    </div>
+
+
+    <div v-for="appt in appointments" :key="appt.appointment_id" class="border p-4 mb-4 rounded flex justify-between items-center">
+      <div>
+        <p><strong>Doctor ID:</strong> {{ appt.doctor_id }}</p>
+        <p><strong>Start Time:</strong> {{ appt.start_time }}</p>
+        <p><strong>End Time:</strong> {{ appt.end_time }}</p>
+        <p><strong>Diagnosis:</strong> {{ appt.diagnosis }}</p>
+        <p><strong>Total Cost:</strong> ${{ appt.total_cost }}</p>
+        <p><strong>Status:</strong> {{ appt.payment_status === 0 ? 'Unpaid' : 'Paid' }}</p>
       </div>
+
+      <div>
+  <div
+    v-if="appt.payment_status === 0"
+    class="flex justify-end"
+  >
+    <button
+      @click="goToStripe(appt)"
+      class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+    >
+      Pay Now
+    </button>
+  </div>
+  <div
+    v-else
+    class="text-green-700 font-semibold"
+  >
+    ✅ Paid
+  </div>
+</div>
+
     </div>
   </div>
 </template>
 
-<script>
-import axios from "axios";
+<script setup>
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
 
-export default {
-  name: "PatientAppointments",
-  data() {
-    return {
-      patientId: null,
-      form: {
-        doctor_id: "",
-        symptoms: "",
-      },
-      appointments: [],
-      loading: false,
-      error: "",
-    };
-  },
-  methods: {
-    formatSymptoms(symptoms) {
-  try {
-    if (typeof symptoms === 'object') {
-      return symptoms.description || symptoms.join(', ');
+const appointments = ref([])
+const error = ref('')
+const successMessage = ref('')
+const goBack = () => {
+  window.location.href = '/patient/my-appointments'
+}
+
+
+let patient = {}
+try {
+  patient = JSON.parse(localStorage.getItem('patient')) || {}
+} catch {
+  patient = {}
+}
+const patientId = patient?.patient_id
+
+onMounted(async () => {
+  const query = new URLSearchParams(window.location.search)
+  const paymentSuccess = query.get('payment') === 'success'
+  const paymentId = query.get('payment_id')
+  const appointmentId = query.get('appointment_id')
+
+  // 1. If returned from Stripe with success, finish payment process
+  if (paymentSuccess && appointmentId && paymentId) {
+    try {
+      const finishRes = await axios.post('http://localhost:8000/process/finish?apikey=admin', {
+        appointment_id: appointmentId,
+        payment_id: paymentId
+      })
+      if (finishRes.data.code === 200) {
+        successMessage.value = 'Payment completed successfully!'
+      }
+    } catch (finishErr) {
+      console.error('Failed to finalize payment:', finishErr)
     }
-    const parsed = JSON.parse(symptoms);
-    return parsed.description || parsed.join(', ');
-  } catch {
-    return String(symptoms);
+  }
+
+  // 2. Then load appointments
+  await loadAppointments()
+})
+
+const loadAppointments = async () => {
+  try {
+    const res = await axios.get(`http://localhost:8000/appointment/records/${patientId}?apikey=admin`)
+    const allAppointments = res.data
+
+    const enrichedAppointments = await Promise.all(
+      allAppointments.map(async (appt) => {
+        try {
+          const calc = await axios.post(`http://localhost:8000/process/calculate?apikey=admin`, {
+            appointment_id: appt.appointment_id,
+          })
+
+          const { payment_amount, payment_id, payment_status } = calc.data.data || {}
+
+          return {
+            ...appt,
+            total_cost: payment_amount ?? 'N/A',
+            payment_id: payment_id ?? null,
+            payment_status: payment_status === true ? 1 : 0
+
+          }
+        } catch (calcErr) {
+          console.error(`Failed to calculate payment for appointment ${appt.appointment_id}`, calcErr)
+          return { ...appt, total_cost: 'N/A', payment_status: 0 }
+        }
+      })
+    )
+
+    appointments.value = enrichedAppointments
+  } catch (err) {
+    console.error('Error loading appointments:', err)
+    error.value = 'Failed to load appointments'
+  }
+};
+const goToStripe = async (appt) => {
+  try {
+    // Get the most updated payment info
+    const res = await axios.post(`http://localhost:8000/process/calculate?apikey=admin`, {
+      appointment_id: appt.appointment_id
+    })
+    const { payment_id, payment_amount } = res.data.data || {}
+
+    if (!payment_id) {
+      throw new Error("No payment_id returned from process/calculate")
+    }
+
+    // Save it in sessionStorage
+    sessionStorage.setItem("last_payment", JSON.stringify({
+      appointment_id: appt.appointment_id,
+      payment_id: payment_id
+    }))
+
+    // Proceed to Stripe
+    const stripeResponse = await fetch("https://personal-5nnqipga.outsystemscloud.com/Stripe/rest/payments/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mode: "payment",
+        success_url: `http://localhost:5173/patient/my-appointments?payment=success`,
+        cancel_url: `http://localhost:5173/patient/my-appointments`,
+        currency: "usd",
+        product_name: `Appointment #${appt.appointment_id}`,
+        unit_amount: Math.abs(payment_amount),
+        quantity: 1
+      })
+    })
+
+    const stripeData = await stripeResponse.json()
+    const redirectUrl = stripeData.url || stripeData.redirect_url || stripeData.checkout_url
+
+    if (redirectUrl) {
+      window.location.href = redirectUrl
+    } else {
+      throw new Error("Stripe did not return a redirect URL")
+    }
+  } catch (err) {
+    console.error("Stripe error:", err)
+    alert("Stripe error: " + err.message)
   }
 }
-,
-    async fetchAppointments() {
-      if (!this.patientId) return;
-      this.loading = true;
-      try {
-        const res = await axios.get(
-          `http://127.0.0.1:8000/appointment/records/${this.patientId}?apikey=admin`
-        );
-        this.appointments = res.data;
-        this.error = "";
-      } catch (err) {
-        this.error = "Failed to load appointments.";
-      } finally {
-        this.loading = false;
-      }
-    },
-    async createAppointment() {
-      if (!this.patientId) {
-        alert("Please log in first.");
-        return;
-      }
 
-      try {
-        const res = await axios.post(
-          "http://116.15.73.191:5100/appointment/new",
-          {
-            patient_id: this.patientId,
-            doctor_id: Number(this.form.doctor_id),
-            patient_symptoms: { description: this.form.symptoms },
-          }
-        );
-        alert("Appointment created! ID: " + res.data.appointment_id);
-        this.form = { doctor_id: "", symptoms: "" };
-        this.fetchAppointments();
-      } catch (err) {
-        alert("Failed to create appointment.");
-        console.error(err);
-      }
-    },
-  },
-  mounted() {
-    const patient = JSON.parse(localStorage.getItem("patient"));
-    this.patientId = patient?.patient_id || null;
-    if (!this.patientId) {
-      this.error = "Patient not logged in.";
-    } else {
-      this.fetchAppointments();
-    }
-  },
-};
+
 </script>
-
-<style scoped>
-textarea {
-  resize: vertical;
-}
-</style>
