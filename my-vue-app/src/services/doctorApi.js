@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const doctorApiInstance = axios.create({
-  baseURL: 'http://localhost:5101',
+  baseURL: 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -32,12 +32,12 @@ doctorApiInstance.interceptors.response.use(
 
 export const doctorApi = {
   getDoctor: async (doctorId) => {
-    const response = await doctorApiInstance.get(`/doctor/${doctorId}`)
+    const response = await doctorApiInstance.get(`/doctor/byid?doctor_id=${doctorId}&apikey=admin`)
     return response.data
   },
 
   getDoctorName: async (doctorName) => {
-    const response = await doctorApiInstance.get(`/doctor/${doctorName}`)
+    const response = await doctorApiInstance.get(`/doctor/byname?doctor_name=${doctorName}&apikey=admin`)
     return response.data
   },
 
@@ -47,12 +47,12 @@ export const doctorApi = {
   },
 
   updateDoctor: async (doctorId, data) => {
-    const response = await doctorApiInstance.put(`/doctor/${doctorId}`, data)
+    const response = await doctorApiInstance.put(`/doctor/byid?doctor_id=${doctorId}&apikey=admin`, data)
     return response.data
   },
 
   deleteDoctor: async (doctorId) => {
-    const response = await doctorApiInstance.delete(`/doctor/${doctorId}`)
+    const response = await doctorApiInstance.delete(`/doctor/byid?doctor_id=${doctorId}&apikey=admin`)
     return response.data
   },
 }

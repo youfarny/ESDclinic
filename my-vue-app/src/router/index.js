@@ -1,6 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue'
 import DoctorDashboard from '../views/doctor/Dashboard.vue'
+import DoctorAppointments from '../components/AppointmentCard.vue'
+import DoctorConsultation from '../views/doctor/Consultation.vue'
+import DoctorRecords from '../views/doctor/Records.vue'
 import DoctorAppointments from '../views/doctor/Appointments.vue'
 import DoctorConsultation from '../views/doctor/Consultation.vue'
 import DoctorRecords from '../views/doctor/Records.vue'
@@ -73,7 +76,15 @@ const routes = [
     name: 'DoctorRecords',
     component: DoctorRecords,
     meta: { requiresAuth: true, role: 'doctor' }
+  },
+  {
+    path: '/doctor/records/:appointmentId',
+    name: 'PastRecordDetails',
+    component: () => import('@/views/doctor/PastRecordDetails.vue'),
+    meta: { requiresAuth: true, role: 'doctor' }
+
   }
+  
 ]
 
 // Create the router instance
@@ -99,4 +110,4 @@ router.beforeEach((to, from, next) => {
   }
 })
 
-export default router
+export default router 

@@ -16,7 +16,7 @@
           Sign in to access your account
         </p>
       </div>
-      
+
       <form class="mt-8 space-y-6" @submit.prevent="handleLogin">
         <div class="rounded-md -space-y-px">
           <!-- Role Selection -->
@@ -105,7 +105,7 @@
               />
             </div>
           </div>
-          
+
           <div class="flex items-center justify-between mt-4">
             <div class="flex items-center">
               <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
@@ -113,7 +113,7 @@
                 Remember me
               </label>
             </div>
-            
+
             <div class="text-sm">
               <a href="#" class="font-medium text-blue-600 hover:text-blue-500">
                 Forgot password?
@@ -149,7 +149,7 @@
           </button>
         </div>
       </form>
-      
+
       <div class="mt-6 text-center">
         <p class="text-sm text-gray-600">
           Need help? <a href="#" class="font-medium text-blue-600 hover:text-blue-500">Contact support</a>
@@ -178,30 +178,57 @@ const handleLogin = async () => {
     isLoading.value = true
     error.value = ''
 
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    // Here you would typically make an API call to your authentication service
-    // For now, we'll simulate a successful login
-    const response = {
-      token: 'sample-token',
-      user: {
-        id: id.value,
-        role: selectedRole.value
+    if (selectedRole.value === 'doctor') {
+      const response = {
+        token: 'sample-doctor-token',
+        user: { id: id.value, role: selectedRole.value }
       }
+      localStorage.setItem('token', response.token)
+      localStorage.setItem('userRole', response.user.role)
+      localStorage.setItem(`${response.user.role}Id`, response.user.id)
+      router.push(`/doctor/dashboard`)
+    } else if (selectedRole.value === 'patient') {
+      const success = await authenticatePatient(id.value, password.value)
+      if (!success) {
+        error.value = 'Failed to authenticate as patient'
+        return
+      }
+
+      const response = {
+        token: 'sample-patient-token',
+        user: { id: id.value, role: selectedRole.value }
+      }
+      localStorage.setItem('token', response.token)
+      localStorage.setItem('userRole', response.user.role)
+      localStorage.setItem(`${response.user.role}Id`, response.user.id)
+      localStorage.setItem('patientData', JSON.stringify(response.user))
+      router.push(`/patient/dashboard`)
+    } else {
+      error.value = 'Invalid role selected'
     }
-
-    // Store authentication data
-    localStorage.setItem('token', response.token)
-    localStorage.setItem('userRole', response.user.role)
-    localStorage.setItem(`${response.user.role}Id`, response.user.id)
-
-    // Redirect based on role
-    router.push(`/${response.user.role}`)
   } catch (err) {
     error.value = err.message || 'Failed to login. Please try again.'
   } finally {
     isLoading.value = false
+  }
+}
+
+const authenticatePatient = async (patient_id, patient_password) => {
+  try {
+    const res = await fetch(`http://localhost:8000/patient/authenticate/${patient_id}&${patient_password}?apikey=admin`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    const data = await res.json()
+    if (res.ok) {
+      localStorage.setItem('patient', JSON.stringify(data))
+      return true
+    } else {
+      throw new Error('Authentication failed')
+    }
+  } catch (err) {
+    console.error('Patient login failed:', err)
+    return false
   }
 }
 </script>

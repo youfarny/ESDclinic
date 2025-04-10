@@ -1,5 +1,5 @@
 import { createStore } from 'vuex'
-import { doctorApi, appointmentApi } from '../services/api'
+import { doctorApi, appointmentApi, processApi } from '../services/api'
 
 export default createStore({
   state: {
@@ -90,19 +90,24 @@ export default createStore({
       }
     },
 
-    async completeConsultation({ commit }, { appointmentId, endTime, diagnosis, prescriptionId }) {
+    async completeConsultation({ commit }, { appointmentId, patientId, diagnosis, medicine }) {
       try {
         commit('SET_LOADING', true)
-        const response = await appointmentApi.endAppointment(appointmentId, endTime, diagnosis, prescriptionId)
+        const response = await processApi.endAppointment({
+          appointment_id: appointmentId,
+          patient_id: patientId,
+          diagnosis,
+          medicine
+        })
         commit('SET_CURRENT_APPOINTMENT', null)
         return response
       } catch (error) {
-        commit('SET_ERROR', error.message)
         throw error
       } finally {
         commit('SET_LOADING', false)
       }
     },
+    
 
     logout({ commit }) {
       commit('SET_USER', null)
