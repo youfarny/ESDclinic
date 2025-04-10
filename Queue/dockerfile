@@ -1,5 +1,0 @@
-FROM python:3.9
-WORKDIR /app/queue
-COPY . /app/queue
-RUN pip install -r /app/queue/requirements.txt
-CMD ["python", "Queue.py"]

@@ -1,5 +1,0 @@
-FROM python:3.9
-WORKDIR /app/prescription
-COPY . /app/prescription
-RUN pip install -r /app/prescription/requirements.txt
-CMD ["python", "Prescription.py"]

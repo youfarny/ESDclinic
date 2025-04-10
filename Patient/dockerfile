@@ -1,5 +1,0 @@
-FROM python:3.9
-WORKDIR /app/patient
-COPY . /app/patient
-RUN pip install -r /app/patient/requirements.txt
-CMD ["python", "Patient.py"]
