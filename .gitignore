@@ -1,0 +1,11 @@
+
+mysql/mysql_data/mysql.sock
+kong-postgresql/pg-data/**
+pg-data/
+kong/grafana-data/**
+grafana-data/
+kong/prometheus-data/**
+prometheus-data/
+venv
+rabbitmq/
+

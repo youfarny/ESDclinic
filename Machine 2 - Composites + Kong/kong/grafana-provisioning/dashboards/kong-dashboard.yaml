@@ -1,0 +1,12 @@
+# grafana-provisioning/dashboards/kong-dashboard.yaml
+apiVersion: 1
+
+providers:
+  - name: "Kong Official Dashboards"
+    folder: "Kong"
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    options:
+      # This folder path is inside the container
+      path: /etc/grafana/provisioning/dashboards

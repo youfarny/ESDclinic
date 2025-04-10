@@ -1,0 +1,6 @@
+services:
+  process_appointment:
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"

@@ -1,0 +1,102 @@
+include:
+  - path: SendNotification/docker-compose.yml
+
+services:
+
+  appointment:
+    build:
+      context: ./appointment
+      dockerfile: Dockerfile
+    ports:
+      - "5100:5100"
+    volumes:
+      - ./appointment:/app/appointment
+
+  doctor:
+    build:
+      context: ./doctor
+      dockerfile: Dockerfile
+    ports:
+      - "5101:5101"
+    volumes:
+      - ./doctor:/app/doctor  # Enable live updates
+
+  patient:
+    build:
+      context: ./patient
+      dockerfile: Dockerfile
+    ports:
+      - "5102:5102"
+    volumes:
+      - ./patient:/app/patient
+
+  payment:
+    build:
+      context: ./payment
+      dockerfile: Dockerfile
+    ports:
+      - "5105:5105"
+    volumes:
+      - ./payment:/app/payment
+
+  prescription:
+    build:
+      context: ./prescription
+      dockerfile: Dockerfile
+    ports:
+      - "5104:5104"
+    volumes:
+      - ./prescription:/app/prescription
+
+
+  queue:
+    build:
+      context: ./queue
+      dockerfile: Dockerfile
+    ports:
+      - "5103:5103"
+    volumes:
+      - ./queue:/app/queue
+
+  stripe:
+    build: 
+      context: ./stripe
+      dockerfile: Dockerfile
+    ports:
+      - "5200:5200"
+    env_file: 
+      - ./stripe/.env
+
+
+
+    # depends_on:
+    #   - appointment
+    #   - doctor
+
+  # notification:
+  #   build:
+  #     context: ./notification
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5005:5005"
+  #   volumes:
+  #     - ./notification:/app/notification
+
+  # appointment:
+  #   build:
+  #     context: ./appointment
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5100:5100"
+  #   volumes:
+  #     - ./appointment:/app/appointment
+
+  # process_appointment:
+  #   build:
+  #     context: ./process_appointment
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5200:5200"
+  #   volumes:
+  #     - ./process_appointment:/app/process_appointment
+

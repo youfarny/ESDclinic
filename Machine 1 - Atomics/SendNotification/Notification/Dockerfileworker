@@ -1,0 +1,17 @@
+# Use the official Python image
+FROM python:3.9-slim
+
+ENV PYTHONUNBUFFERED=1
+
+# Set working directory
+WORKDIR /app
+
+# Copy the current directory to the container
+COPY . /app
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Run the worker
+CMD ["python", "-u", "worker.py"]
+

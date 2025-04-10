@@ -1,0 +1,20 @@
+services:
+  notification:
+    restart: always
+    build:
+      context: ./notification
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./notification:/app/notification
+
+  notification_worker:
+    restart: always
+    build:
+      context: ./notification
+      dockerfile: Dockerfileworker
+    ports:
+      - "5111:5111"
+    volumes:
+      - ./notification:/app/notification_worker
