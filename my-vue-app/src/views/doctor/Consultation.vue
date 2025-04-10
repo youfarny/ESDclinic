@@ -10,7 +10,7 @@
             </svg>
           </div>
           <h1 class="text-2xl font-bold text-gray-800">Consultation</h1>
-        </div>
+        </div>  
         <div class="flex items-center">
           <!-- Zoom Button - toggles the video interface -->
           <button @click="toggleZoomInterface" 
