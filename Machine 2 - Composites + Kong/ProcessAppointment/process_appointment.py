@@ -606,21 +606,21 @@ def process_appointment_start():
         
 
 
-        # 14 & 15 Zoom
+        # Zoom
         print("\n\n")
-        print("------------------------------STEP 14 & 15------------------------------")
+        #print("------------------------------STEP 14 & 15------------------------------")
 
-        zoom_link = "testing"
-
-
+        zoom_link = "https://us04web.zoom.us/j/3724875036?pwd=eXMzSnpuR2I4OUZyYkVBbWxlZ2E0UT09"
 
 
 
 
 
-        # 16 Notification
+
+
+        # 14 Notification
         print("\n\n")
-        print("------------------------------STEP 16------------------------------")
+        print("------------------------------STEP 14------------------------------")
 
         notification_data = {
             "notification_type": "appointment_start",
@@ -668,9 +668,9 @@ def process_appointment_start():
 
 
 
-        # 18 Return appointment details to the doctor
+        # 16 Return appointment details to the doctor
         print("\n\n")
-        print("------------------------------STEP 18------------------------------")
+        print("------------------------------STEP 16------------------------------")
         return jsonify({
             "code": 200,
             "message": "Appointment started successfully",
