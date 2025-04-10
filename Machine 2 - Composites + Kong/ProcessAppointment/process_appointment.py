@@ -50,7 +50,7 @@ swagger = Swagger(app, config=swagger_config, template=swagger_template)
 
 
 # ip_address = 'localhost'
-ip_address = environ.get("IP_ADDRESS", "116.15.73.191")
+ip_address = environ.get("IP_ADDRESS", "202.166.134.237")
 
 appointment_URL = f"http://{ip_address}:5100/appointment"
 patient_URL = f"http://{ip_address}:5102/patient"
