@@ -40,4 +40,9 @@ export const patientApi = {
     const response = await patientApiInstance.get(`/patient/${patientId}?apikey=admin`)
     return response.data
   },
+
+  getPrescriptionDetails: async (prescriptionId) => {
+    const response = await patientApiInstance.get(`/prescription/${prescriptionId}?apikey=admin`)
+    return response.data
+  }
 }

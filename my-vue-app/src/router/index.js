@@ -34,7 +34,15 @@ const routes = [
     name: 'DoctorRecords',
     component: DoctorRecords,
     meta: { requiresAuth: true, role: 'doctor' }
+  },
+  {
+    path: '/doctor/records/:appointmentId',
+    name: 'PastRecordDetails',
+    component: () => import('@/views/doctor/PastRecordDetails.vue'),
+    meta: { requiresAuth: true, role: 'doctor' }
+
   }
+  
 ]
 
 const router = createRouter({
