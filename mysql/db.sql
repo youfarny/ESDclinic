@@ -33,10 +33,9 @@ CREATE TABLE `queue`.`queue` (
   -- Insert fake queue
 INSERT INTO `queue`.`queue` (appointment_id, doctor_id, patient_contact)
 VALUES 
-(1, 1, 97208453),
 (2, 2, 97208453),
 (3, 3, 97208453),
-(4, 1, 97208453),
+(4, 3, 97208453),
 (5, 2, 97208453);
 
 DROP DATABASE IF EXISTS appointment;  
@@ -60,11 +59,11 @@ CREATE TABLE `appointment`.`appointment` (
 INSERT INTO `appointment`.`appointment` 
     (patient_id, patient_symptoms, notes, diagnosis, doctor_id, prescription_id, payment_id, start_time, end_time)
 VALUES 
-    (1, '["Fever", "Headache"]', '[{"diagnosis": "Influenza (Flu)", "confidence": 90}, {"diagnosis": "Common Cold", "confidence": 85}]', 'Viral infection', 1, 1, 1, '2025-03-18 09:00:00', '2025-03-18 09:30:00'),
+    (1, '["Fever", "Headache"]', '[{"diagnosis": "Influenza (Flu)", "confidence": 90}, {"diagnosis": "Common Cold", "confidence": 85}]', 'Viral infection', 2, 1, 1, '2025-03-18 09:00:00', '2025-03-18 09:30:00'),
     (2, '["Stomach pain"]', NULL, NULL, 2, NULL, NULL, NULL, NULL),
-    (3, '["Skin rash"]', NULL, NULL, 3, NULL, NULL, NULL, NULL),
-    (4, '["Back pain"]', NULL, NULL, 1, NULL, NULL, NULL, NULL),
-    (5, '["Cough", "Sore throat"]', NULL, NULL, 2, NULL, NULL, NULL, NULL);
+    (3, '["Skin rash"]', NULL, NULL, 1, NULL, NULL, NULL, NULL),
+    (4, '["Back pain"]', NULL, NULL, 3, NULL, NULL, NULL, NULL),
+    (5, '["Cough", "Sore throat"]', NULL, NULL, 3, NULL, NULL, NULL, NULL);
 
 
     
@@ -80,9 +79,9 @@ CREATE TABLE `doctor`.`doctor` (
   -- Insert fake doctors
 INSERT INTO `doctor`.`doctor` (doctor_id, doctor_name)
 VALUES 
-(1, 'Dr. Michael Lee'),
-(2, 'Dr. Susan Davis'),
-(3, 'Dr. Robert Wilson');
+(1, 'Dr. A'),
+(2, 'Dr. B'),
+(3, 'Dr. C');
  
 DROP DATABASE IF EXISTS prescription;
 CREATE DATABASE `prescription` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;

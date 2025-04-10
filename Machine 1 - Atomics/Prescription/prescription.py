@@ -169,10 +169,14 @@ def calculate_medicine_cost():
 
     for med in data['medicines']:
         medicine = Medicine.query.get(med)
-        if medicine:
+        # if medicine:
+        #     total_cost += medicine.cost
+        # else:
+        #     return jsonify({"error": f"Medicine '{med}' not found"}), 404
+        try:
             total_cost += medicine.cost
-        else:
-            return jsonify({"error": f"Medicine '{med}' not found"}), 404
+        except:
+            print("Medicine not in pricelist")
 
     return jsonify({"total_cost": total_cost}), 200
 
