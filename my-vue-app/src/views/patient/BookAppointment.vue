@@ -188,13 +188,20 @@ const bookAppointment = async () => {
   }
 
   let parsedSymptoms
-  try {
-    parsedSymptoms = JSON.parse(symptoms.value)
-    if (!Array.isArray(parsedSymptoms)) throw new Error()
-  } catch {
-    error.value = 'Invalid symptom format. Use ["Fever", "Headache"]'
+try {
+  // Try JSON parsing first
+  parsedSymptoms = JSON.parse(symptoms.value)
+
+  if (!Array.isArray(parsedSymptoms)) throw new Error()
+} catch {
+  // If not valid JSON array, fallback to splitting by comma
+  parsedSymptoms = symptoms.value.split(',').map(s => s.trim()).filter(s => s)
+  if (parsedSymptoms.length === 0) {
+    error.value = 'Please enter at least one symptom.'
     return
   }
+}
+
 
   // Determine request_doctor value for composite service
   let requestDoctor = ''
