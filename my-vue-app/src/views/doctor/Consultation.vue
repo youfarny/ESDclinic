@@ -418,7 +418,7 @@ const submitConsultation = async () => {
       
       // Wait a moment and then redirect
       setTimeout(() => {
-        router.push('/doctor')
+        router.push('/doctor/dashboard')
       }, 2000)
     } else {
       popupMessage.value = `❌ Submission failed: ${response.message}`
