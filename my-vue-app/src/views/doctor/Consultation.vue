@@ -11,8 +11,63 @@
           </div>
           <h1 class="text-2xl font-bold text-gray-800">Consultation</h1>
         </div>
-        <div class="bg-blue-100 px-4 py-2 rounded-full text-blue-800 font-medium">
-          Appointment #{{ appointmentId }}
+        <div class="flex items-center">
+          <!-- Zoom Button - toggles the video interface -->
+          <button @click="toggleZoomInterface" 
+                  class="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg mr-3 hover:bg-blue-700 transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            {{ showZoomInterface ? 'Hide Video Call' : 'Start Video Consultation' }}
+          </button>
+          <div class="bg-blue-100 px-4 py-2 rounded-full text-blue-800 font-medium">
+            Appointment #{{ appointmentId }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Embedded Zoom Interface -->
+      <div v-if="showZoomInterface && zoomMeeting?.join_url" class="mb-6">
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-3 flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-white flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              Video Consultation
+            </h2>
+            <button @click="toggleZoomInterface" class="bg-white bg-opacity-20 text-white px-2 py-1 rounded text-sm flex items-center hover:bg-opacity-30">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Close
+            </button>
+          </div>
+          <div class="p-0">
+            <!-- Embedded Zoom interface -->
+            <iframe 
+              :src="zoomEmbedUrl" 
+              allow="microphone; camera; fullscreen; display-capture; autoplay" 
+              class="w-full h-96 border-0"
+              style="min-height: 480px;"
+              frameborder="0">
+            </iframe>
+            <!-- Simple meeting info display -->
+            <div class="p-3 bg-gray-50 text-sm border-t">
+              <div class="flex flex-wrap gap-4">
+                <div>
+                  <span class="text-gray-600">Meeting ID:</span>
+                  <span class="font-mono ml-1">{{ formatZoomId(zoomMeeting?.id) }}</span>
+                </div>
+                <div>
+                  <span class="text-gray-600">Password:</span>
+                  <span class="font-mono ml-1">{{ zoomMeeting?.password }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -197,6 +252,7 @@ import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { appointmentApi, patientApi } from '@/services/api.js'
+import { zoomApi } from '@/services/zoomApi.js'
 
 const store = useStore()
 const route = useRoute()
@@ -217,6 +273,18 @@ const patient = ref(null)
 const consultationFinished = ref(false) // ✅ track if doctor finished
 const showLeaveModal = ref(false)
 let leaveNext = null // hold the next() function if user confirms
+
+// Zoom integration
+const zoomMeeting = ref(null)
+const showZoomInterface = ref(false)
+
+// Convert join URL to embed URL format
+const zoomEmbedUrl = computed(() => {
+  if (!zoomMeeting.value?.join_url) return ''
+  
+  // For Zoom Web Client embedding
+  return zoomMeeting.value.join_url.replace('zoom.us/j/', 'zoom.us/wc/join/') + '&pwd=' + zoomMeeting.value.password
+})
 
 const handleBeforeUnload = (event) => {
   if (!consultationFinished.value) {
@@ -247,12 +315,47 @@ const fetchAppointment = async () => {
 
     const patientData = await patientApi.getPatientInfo(response.patient_id)
     patient.value = patientData
+    
+    // Initialize Zoom meeting for demo
+    createZoomMeeting()
 
   } catch (err) {
     error.value = err.message || 'Failed to fetch appointment details'
   } finally {
     isLoading.value = false
   }
+}
+
+const toggleZoomInterface = () => {
+  if (!zoomMeeting.value && !showZoomInterface.value) {
+    createZoomMeeting().then(() => {
+      showZoomInterface.value = true
+    })
+  } else {
+    showZoomInterface.value = !showZoomInterface.value
+  }
+}
+
+const createZoomMeeting = async () => {
+  try {
+    const meeting = await zoomApi.createZoomMeeting({
+      patientName: patient.value?.patient_name || 'Patient',
+      id: appointmentId.value,
+      appointmentDate: appointment.value?.date || new Date().toISOString()
+    })
+    
+    zoomMeeting.value = meeting
+    return meeting
+  } catch (error) {
+    console.error('Error creating Zoom meeting:', error)
+    popupMessage.value = 'Failed to create video call. Please try again.'
+  }
+}
+
+// Format Zoom ID with spaces for readability
+const formatZoomId = (id) => {
+  if (!id) return ''
+  return id.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3')
 }
 
 const submitConsultation = async () => {
