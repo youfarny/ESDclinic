@@ -148,8 +148,11 @@ def process_appointment_new():
             request_doctor = appointment_data.get("request_doctor", "").strip()
             try:
               patient_contact = appointment_data.get("patient_contact")
+              if patient_contact == None:
+                  raise Exception("No patient_contact provided")
             except:
-              patient_response = requests.get(f"{patient_URL}/{patient_id}")
+              patient_response = requests.get(f"{patient_URL}/{patient_id}").json()
+              print(patient_response)
               patient_contact = patient_response.get("patient_contact")
 
             patient_symptoms = appointment_data.get("patient_symptoms")
