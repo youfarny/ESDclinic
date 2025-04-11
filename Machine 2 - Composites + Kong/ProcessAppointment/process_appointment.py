@@ -1112,7 +1112,7 @@ def process_appointment_calculate():
             consultation_duration_minutes = time_diff.total_seconds()/60
             consultation_duration_minutes = time_diff.total_seconds()/60
             print('Consultation duration (minute):', consultation_duration_minutes)
-            consultation_cost = float(consultation_duration_minutes * 1.5) # consultation rate
+            consultation_cost = float(consultation_duration_minutes * 10) # consultation rate
             print('Consultation Cost: $', consultation_cost)
 
 
