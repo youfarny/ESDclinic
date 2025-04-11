@@ -1,0 +1,23 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: my-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ESD213password!        # Change this
+      MYSQL_DATABASE: esd-clinic-db               # Optional: create a database on start
+      MYSQL_USER: user                       # Optional: create a user
+      MYSQL_PASSWORD: ESD213password!           # Optional: user's password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - mynet
+
+volumes:
+  mysql_data:
+
+networks:
+  mynet:
+    driver: bridge
