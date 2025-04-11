@@ -446,9 +446,9 @@ def process_appointment_start():
     print(start_time)
 
 
-    # 1 Get next appointment  {doctor_id}
+    # 3 Get next appointment  {doctor_id}
     print("\n\n")
-    print("------------------------------STEP 1------------------------------")
+    print("------------------------------STEP 3------------------------------")
     try:
         data = request.get_json()
         print(data)
@@ -461,10 +461,10 @@ def process_appointment_start():
 
 
 
-        # 2 Get the next appointment from the queue {doctor_id}
-        # 3 Return next appointment {doctor_id, appointment_id}
+        # 4 Get the next appointment from the queue {doctor_id}
+        # 5 Return next appointment {doctor_id, appointment_id}
         print("\n\n")
-        print("------------------------------STEP 2 & 3------------------------------")
+        print("------------------------------STEP 4 & 5------------------------------")
         print(f"Fetching next appointment for doctor_id: {doctor_id}")
         queue_response = requests.get(f"{queue_URL}/next/{doctor_id}")
         queue_data = queue_response.json()
@@ -480,9 +480,9 @@ def process_appointment_start():
 
 
 
-        # 4 Delete appointment from queue {appointment_id} & # 5 Return deletion status
+        # 6 Delete appointment from queue {appointment_id} & # 7 Return deletion status
         print("\n\n")
-        print("------------------------------STEP 4 & 5------------------------------")
+        print("------------------------------STEP 6 & 7------------------------------")
         print(f"Deleting appointment {appointment_id} from queue...")
         delete_response = requests.delete(f"{queue_URL}/{doctor_id}/{appointment_id}")
         delete_data = delete_response.json()
@@ -496,10 +496,10 @@ def process_appointment_start():
 
 
 
-        # 6 Get full appointment details {appointment_id}
-        # 7 Return appointment details {...}
+        # 8 Get full appointment details {appointment_id}
+        # 9 Return appointment details {...}
         print("\n\n")
-        print("------------------------------STEP 6 & 7------------------------------")
+        print("------------------------------STEP 8 & 9------------------------------")
         print(f"Fetching details for appointment_id: {appointment_id}")
         appointment_response = requests.get(f"{appointment_URL}/{appointment_id}")
 
@@ -523,10 +523,10 @@ def process_appointment_start():
 
 
 
-        # 8 Patient allergies {patient_id}
-        # 9 Return patient allergies {patient_id, patient_allergies}
+        # 10 Patient allergies {patient_id}
+        # 11 Return patient allergies {patient_id, patient_allergies}
         print("\n\n")
-        print("------------------------------STEP 8 & 9------------------------------")
+        print("------------------------------STEP 10 & 11------------------------------")
         print(f"Fetching allergies for patient_id: {patient_id}")
         print(f"{patient_URL}/patient/allergies/{patient_id}")
         allergies_response = requests.get(f"{patient_URL}/allergies/{patient_id}")
@@ -545,10 +545,10 @@ def process_appointment_start():
 
 
 
-        # 10 Send symptoms to AI {patient_symptoms}
-        # 11 Return recommendations {diagnoses}
+        # 12 Send symptoms to AI {patient_symptoms}
+        # 13 Return recommendations {diagnoses}
         print("\n\n")
-        print("------------------------------STEP 10 & 11------------------------------")
+        print("------------------------------STEP 12 & 13------------------------------")
         patient_symptoms = appointment_data.get("patient_symptoms", "Unknown symptoms")
 
         if not patient_id:
@@ -574,9 +574,9 @@ def process_appointment_start():
 
 
 
-        # 12 Update appointment {appointment_id, notes, start_time}
+        # 14 Update appointment {appointment_id, notes, start_time}
         print("\n\n")
-        print("------------------------------STEP 12 & 13------------------------------")
+        print("------------------------------STEP 14 & 15------------------------------")
         
         update_payload = {
             "appointment_id": appointment_id, 
@@ -618,9 +618,9 @@ def process_appointment_start():
 
 
 
-        # 14 Notification
+        # 16 Notification
         print("\n\n")
-        print("------------------------------STEP 14------------------------------")
+        print("------------------------------STEP 16------------------------------")
 
         notification_data = {
             "notification_type": "appointment_start",
@@ -668,8 +668,8 @@ def process_appointment_start():
 
 
 
-        # 16 Return appointment details to the doctor
-        # 16 Return appointment details to the doctor
+        
+        # 19 Return appointment details to the doctor
         print("\n\n")
         print("------------------------------STEP 16------------------------------")
         return jsonify({
