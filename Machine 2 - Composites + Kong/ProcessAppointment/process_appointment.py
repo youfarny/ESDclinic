@@ -14,6 +14,7 @@ import pika
 app = Flask(__name__)
 CORS(app, origins=["*"])
 from flasgger import Swagger
+import time
 # Initialize Swagger with configuration
 swagger_config = {
     "headers": [],
@@ -331,15 +332,32 @@ def process_appointment_new():
                 )
             )
 
-            # print(f"Notification for appointment {new_appointment_id} sent to '{queue_name}'.")
+            start_time = time.time()
 
-            print(f"Waiting for queue_length response for appointment {new_appointment_id}...")
-
-            # Wait for the response
-            while queue_length is None:
+            while queue_length is None and (time.time() - start_time) < 5:
                 connection.process_data_events(time_limit=1)
 
-            print(f"Queue length for appointment {new_appointment_id}: {queue_length}")
+            if queue_length is None:
+                print("No response received within 5 seconds. Closing connection without queue_length.")
+                queue_length = 1
+                data = {
+                    "doctor_id": selected_doctor_id,
+                    "patient_contact": patient_contact,
+                    "appointment_id": new_appointment_id
+                }
+
+                response = requests.post(queue_URL, json=data)
+
+                if response.status_code == 201:
+                    # Successfully created the appointment and got the queue length
+                    response_data = response.json()
+                    queue_length = response_data.get("queue_length")
+                    print(queue_length)
+                else:
+                    # Handle error
+                    print(f"Failed to create appointment: {response.text}")
+            else:
+                print(f"Queue length for appointment {new_appointment_id}: {queue_length}")
 
             connection.close()
 
