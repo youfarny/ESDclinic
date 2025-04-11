@@ -11,7 +11,7 @@ On Machine 1:
 
 On Machine 2:
 - run docker-compose on "Machine 2 - Composites + Kong". This will start the composite microservice ProcessAppointment and Kong API Gateway.
-- run "npm run dev" on the vue app
+- run "npm install" then "npm run dev" on the vue app
 
 # Logins:
 
