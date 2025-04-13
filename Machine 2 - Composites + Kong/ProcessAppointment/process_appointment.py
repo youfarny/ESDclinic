@@ -572,7 +572,7 @@ def process_appointment_start():
         if not patient_id:
             return jsonify({"code": 500, "message": "Failed to retrieve patient_id from appointment"}), 500
 
-        client = genai.Client(api_key="AIzaSyAWkKyubwXAJYDMdf40qNkwWwaEkY-MVTA")
+        client = genai.Client(api_key="hidden")
 
         response = client.models.generate_content(
             model="gemini-2.0-flash",
